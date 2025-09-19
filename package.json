@@ -10,6 +10,7 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "convex": "^1.27.1",
     "next": "15.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0"
