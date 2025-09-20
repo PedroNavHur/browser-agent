@@ -7,6 +7,7 @@ import { ChatComposer } from "./chat/ChatComposer";
 import { ChatHeader } from "./chat/ChatHeader";
 import { ChatMessageList } from "./chat/ChatMessageList";
 import type { ChatMessage } from "./chat/types";
+import { ListingsPanel } from "./listings/ListingsPanel";
 
 const introMessages: ChatMessage[] = [
   {
@@ -97,22 +98,40 @@ export function ChatWindow() {
 
   return (
     <main className="min-h-screen bg-base-200 text-base-content">
-      <div className="container mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-4 py-10">
+      <div className="container mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 py-10">
         <ChatHeader isConvexConfigured={isConvexConfigured} />
 
-        <section className="card flex-1 bg-base-100 shadow-xl">
-          <div className="card-body flex h-full flex-col gap-6">
-            <ChatMessageList messages={messages} />
+        <div className="grid flex-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
+          <section className="card flex h-full flex-col bg-base-100 shadow-xl">
+            <div className="card-body flex h-full flex-col gap-6">
+              <ChatMessageList messages={messages} />
 
-            <ChatComposer
-              input={input}
-              isSending={isSending}
-              isConvexConfigured={isConvexConfigured}
-              onChange={(value) => setInput(value)}
-              onSubmit={handleSubmit}
-            />
-          </div>
-        </section>
+              <ChatComposer
+                input={input}
+                isSending={isSending}
+                isConvexConfigured={isConvexConfigured}
+                onChange={(value) => setInput(value)}
+                onSubmit={handleSubmit}
+              />
+            </div>
+          </section>
+
+          {isConvexConfigured ? (
+            <ListingsPanel />
+          ) : (
+            <section className="card h-full bg-base-100 shadow-xl">
+              <div className="card-body flex h-full flex-col items-center justify-center gap-3 text-center opacity-70">
+                <p>
+                  Add your Convex deployment URL to enable live listing storage.
+                </p>
+                <p className="text-sm">
+                  The listings panel will populate once the displayListings tool
+                  can sync data to your Convex tables.
+                </p>
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </main>
   );

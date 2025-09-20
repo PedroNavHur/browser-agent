@@ -7,7 +7,7 @@ import {
 } from "@convex-dev/agent";
 import { v } from "convex/values";
 import { z } from "zod";
-import { components } from "./_generated/api";
+import { api, components } from "./_generated/api";
 import { action } from "./_generated/server";
 
 const agentComponent = (components as { agent: AgentComponent }).agent;
@@ -19,6 +19,8 @@ type SearchEstateResult = {
   url: string;
   summary: string;
   tags: string[];
+  phone?: string;
+  imageUrl?: string;
 };
 
 const searchEstate = createTool({
@@ -71,8 +73,40 @@ const searchEstate = createTool({
           "en-US",
         )} per month.`,
         tags: [...sharedTags, `priority_${listingNumber}`],
+        phone: `+1 (555) ${String(4200 + index).padStart(4, "0")}`,
+        imageUrl: `https://images.buscalo.dev/preview/${encodeURIComponent(
+          normalizedQuery.toLowerCase(),
+        )}/${listingNumber}.jpg`,
       };
     });
+  },
+});
+
+const displayListings = createTool({
+  description:
+    "Persist a batch of listings so the Buscalo console can render them for the user.",
+  args: z.object({
+    listings: z
+      .array(
+        z.object({
+          title: z.string(),
+          address: z.string(),
+          price: z.number(),
+          phone: z.string().optional(),
+          imageUrl: z.string().url().optional(),
+          url: z.string().url(),
+        }),
+      )
+      .min(1)
+      .describe("Listings to display in the UI"),
+  }),
+  handler: async (ctx, { listings }) => {
+    const threadId = ctx.threadId ?? "public";
+    await ctx.runMutation(api.listings.recordListings, {
+      threadId,
+      listings,
+    });
+    return `Stored ${listings.length} listing${listings.length === 1 ? "" : "s"} for display.`;
   },
 });
 
@@ -83,10 +117,10 @@ export const buscaloAgent = new Agent(agentComponent, {
     "You are Buscalo, a browser automation specialist focused on real-estate map listings.",
     "Explain what you can do today, what is on the roadmap, and how the Browserbase + Stagehand stack powers the workflow.",
     "When features are not yet implemented, be transparent and suggest next steps.",
-    "Use the searchEstate tool when the user wants concrete listings or filter validation.",
+    "Use the searchEstate tool to simulate listings and call displayListings to sync them into the UI tables.",
     "Keep answers concise (3-4 sentences) and focus on actionable guidance for the user.",
   ].join(" "),
-  tools: { searchEstate },
+  tools: { searchEstate, displayListings },
   maxSteps: 4,
 });
 
