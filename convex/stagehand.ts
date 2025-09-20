@@ -1,6 +1,7 @@
 "use node";
 
 import { Stagehand } from "@browserbasehq/stagehand";
+import type { LogLine } from "@browserbasehq/stagehand";
 import { v } from "convex/values";
 import { z } from "zod";
 import { action } from "./_generated/server";
@@ -61,7 +62,7 @@ export const runApartmentsExtraction = action({
   handler: async (_ctx, args) => {
     const browserbaseApiKey = process.env.BROWSERBASE_API_KEY;
     const browserbaseProjectId = process.env.BROWSERBASE_PROJECT_ID;
-    const openaiApiKey = process.env.OPENAI_API_KEY;
+    const convexOpenAiKey = process.env.OPENAI_API_KEY ?? process.env.CONVEX_OPENAI_API_KEY;
 
     if (!browserbaseApiKey) {
       throw new Error("Missing BROWSERBASE_API_KEY environment variable.");
@@ -69,8 +70,10 @@ export const runApartmentsExtraction = action({
     if (!browserbaseProjectId) {
       throw new Error("Missing BROWSERBASE_PROJECT_ID environment variable.");
     }
-    if (!openaiApiKey) {
-      throw new Error("Missing OPENAI_API_KEY environment variable.");
+    if (!convexOpenAiKey) {
+      throw new Error(
+        "Missing OPENAI_API_KEY (or CONVEX_OPENAI_API_KEY) environment variable.",
+      );
     }
 
     const stagehand = new Stagehand({
@@ -80,7 +83,23 @@ export const runApartmentsExtraction = action({
       verbose: 1,
       waitForCaptchaSolves: true,
       enableCaching: false,
-      modelName: "gpt-5-mini",
+      modelName: process.env.STAGEHAND_MODEL ?? "gpt-4.1-mini",
+      modelClientOptions: {
+        apiKey: convexOpenAiKey,
+        baseURL: process.env.OPENAI_BASE_URL,
+      },
+      disablePino: true,
+      logger: (logLine: LogLine) => {
+        const level = typeof logLine.level === "number" ? logLine.level : 1;
+        if (level <= 1) {
+          const category = logLine.category ?? "general";
+          const message =
+            typeof logLine.message === "string"
+              ? logLine.message
+              : JSON.stringify(logLine.message);
+          console.log(`stagehand:${category} ${message}`);
+        }
+      },
     });
 
     const filtersDescription = buildFilterPrompt(args);
@@ -126,6 +145,15 @@ export const runApartmentsExtraction = action({
       });
 
       const normalized = normalizeListings(extracted.listings ?? []);
+      console.log(
+        "stagehand:normalized_listings",
+        normalized.length,
+        normalized.map((listing) => ({
+          title: listing.title,
+          price: listing.price,
+          url: listing.url,
+        })),
+      );
 
       return {
         liveViewUrl: liveViewUrl ?? "",

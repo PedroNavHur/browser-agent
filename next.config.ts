@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "demo.buscalo.dev",
       },
+      {
+        protocol: "https",
+        hostname: "images1.apartments.com",
+      },
     ],
   },
 };
