@@ -1,33 +1,121 @@
+import { openai } from "@ai-sdk/openai";
+import {
+  Agent,
+  type AgentComponent,
+  createThread,
+  createTool,
+} from "@convex-dev/agent";
 import { v } from "convex/values";
+import { z } from "zod";
+import { components } from "./_generated/api";
 import { action } from "./_generated/server";
+
+const agentComponent = (components as { agent: AgentComponent }).agent;
+
+type SearchEstateResult = {
+  title: string;
+  price: number;
+  address: string;
+  url: string;
+  summary: string;
+  tags: string[];
+};
+
+const searchEstate = createTool({
+  description:
+    "Search Buscalo's preview dataset for rentals that match the requested filters.",
+  args: z.object({
+    query: z.string().min(1).describe("City or neighborhood to search"),
+    maxPrice: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe("Upper bound for monthly rent in USD"),
+    bedrooms: z
+      .union([z.literal("studio"), z.number().int().min(0)])
+      .optional()
+      .describe("Bedroom count (use 'studio' for zero bedrooms)"),
+    pets: z.boolean().optional().describe("Whether listings must allow pets"),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(25)
+      .optional()
+      .describe("Maximum listings to return (defaults to 3)"),
+  }),
+  handler: async (_ctx, args): Promise<SearchEstateResult[]> => {
+    const limit = args.limit ?? 3;
+    const normalizedQuery = args.query.trim();
+    const basePrice = args.maxPrice ?? 2600;
+    const sharedTags = [
+      ...(args.pets ? ["pets_ok"] : []),
+      ...(args.bedrooms === "studio" || args.bedrooms === 0 ? ["studio"] : []),
+      ...(typeof args.bedrooms === "number" && args.bedrooms > 0
+        ? [`${args.bedrooms}br`]
+        : []),
+    ];
+
+    return Array.from({ length: limit }, (_, index) => {
+      const price = Math.max(950, basePrice - index * 125);
+      const listingNumber = index + 1;
+      return {
+        title: `${normalizedQuery} Preview ${listingNumber}`,
+        price,
+        address: `${normalizedQuery} • Highlight ${listingNumber}`,
+        url: `https://demo.buscalo.dev/listings/${encodeURIComponent(
+          normalizedQuery.toLowerCase(),
+        )}/${listingNumber}`,
+        summary: `Preview listing in ${normalizedQuery} with rent around $${price.toLocaleString(
+          "en-US",
+        )} per month.`,
+        tags: [...sharedTags, `priority_${listingNumber}`],
+      };
+    });
+  },
+});
+
+export const buscaloAgent = new Agent(agentComponent, {
+  name: "Buscalo",
+  languageModel: openai.chat("gpt-5-mini"),
+  instructions: [
+    "You are Buscalo, a browser automation specialist focused on real-estate map listings.",
+    "Explain what you can do today, what is on the roadmap, and how the Browserbase + Stagehand stack powers the workflow.",
+    "When features are not yet implemented, be transparent and suggest next steps.",
+    "Use the searchEstate tool when the user wants concrete listings or filter validation.",
+    "Keep answers concise (3-4 sentences) and focus on actionable guidance for the user.",
+  ].join(" "),
+  tools: { searchEstate },
+  maxSteps: 4,
+});
 
 export const sendMessage = action({
   args: {
     text: v.string(),
+    threadId: v.optional(v.string()),
   },
   returns: v.object({
     reply: v.string(),
-    trackingId: v.string(),
+    threadId: v.string(),
   }),
-  handler: async (_, args) => {
-    const trimmed = args.text.trim();
+  handler: async (ctx, { text, threadId }) => {
+    const trimmed = text.trim();
     if (trimmed.length === 0) {
       throw new Error("Message cannot be empty.");
     }
 
-    const trackingId = `mock-${Date.now()}`;
-    const reply = [
-      "🧭 Buscalo is spinning up its map automation stack.",
-      "",
-      "We'll soon navigate real listing sites with Browserbase + Stagehand,",
-      `but for now here's an echo of your request: "${trimmed}".`,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const activeThreadId =
+      threadId ?? ((await createThread(ctx, agentComponent)) as string);
+    const result = await buscaloAgent.generateText(
+      ctx,
+      { threadId: activeThreadId },
+      { prompt: trimmed },
+    );
 
     return {
-      reply,
-      trackingId,
+      reply: result.text,
+      threadId: activeThreadId,
     };
   },
 });

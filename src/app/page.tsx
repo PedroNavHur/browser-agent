@@ -15,13 +15,13 @@ const introMessages: ChatMessage[] = [
   {
     id: "intro-1",
     role: "agent",
-    text: "Hola, soy Buscalo — tu agente explorador de mapas inmobiliarios.",
-    hint: "Pídeme que busque alquileres, aplique filtros o genere una exportación.",
+    text: "Hi, I'm Buscalo — your map-savvy real estate scout.",
+    hint: "Ask me to find rentals, apply filters, or prep an export.",
   },
   {
     id: "intro-2",
     role: "agent",
-    text: "Describe qué ciudad, presupuesto y requisitos quieres y me pondré a trabajar.",
+    text: "Tell me the city, budget, and must-haves and I'll get to work.",
   },
 ];
 
@@ -29,6 +29,7 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>(introMessages);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [threadId, setThreadId] = useState<string | undefined>(undefined);
 
   const isConvexConfigured = useMemo(() => Boolean(convexClient), []);
 
@@ -58,7 +59,7 @@ export default function Home() {
         enqueueMessage({
           id: `agent-missing-${Date.now()}`,
           role: "agent",
-          text: "Necesitamos configurar Convex para hablar con el agente real. Añade NEXT_PUBLIC_CONVEX_URL y vuelve a intentarlo.",
+          text: "Convex isn't configured yet. Add NEXT_PUBLIC_CONVEX_URL and try again.",
         });
         return;
       }
@@ -68,25 +69,28 @@ export default function Home() {
         throw new Error("Convex client unavailable");
       }
 
-      const response = await client.action(api.agent.sendMessage, {
-        text: trimmed,
-      });
+      const payload = threadId
+        ? { text: trimmed, threadId }
+        : { text: trimmed };
+
+      const response = await client.action(api.agent.sendMessage, payload);
 
       enqueueMessage({
-        id: response.trackingId,
+        id: response.threadId,
         role: "agent",
         text: response.reply,
-        hint: `Tracking ID: ${response.trackingId}`,
+        hint: `Thread ID: ${response.threadId}`,
       });
+      setThreadId(response.threadId);
     } catch (error) {
       const errorText =
         error instanceof Error
           ? error.message
-          : "Algo salió mal al contactar al agente.";
+          : "Something went wrong while contacting the agent.";
       enqueueMessage({
         id: `agent-error-${Date.now()}`,
         role: "agent",
-        text: "No pude enviar tu mensaje en este momento.",
+        text: "I couldn't send your message right now.",
         hint: errorText,
       });
     } finally {
@@ -101,21 +105,21 @@ export default function Home() {
           <span className="badge badge-secondary badge-outline mx-auto w-fit">
             Buscalo · Browser Agent
           </span>
-          <h1 className="text-3xl font-bold sm:text-4xl">Habla con Buscalo</h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">Talk with Buscalo</h1>
           <p className="text-base-content/80">
-            Describe la misión inmobiliaria y prepararemos al agente para
-            navegar mapas, aplicar filtros y extraer listings reales.
+            Describe your real-estate mission and we’ll prep the agent to
+            navigate maps, apply filters, and extract real listings.
           </p>
         </header>
 
         <section className="card flex-1 bg-base-100 shadow-xl">
           <div className="card-body flex h-full flex-col gap-6">
             <div className="flex items-center justify-between">
-              <h2 className="card-title">Chat piloto</h2>
+              <h2 className="card-title">Pilot chat</h2>
               <span
                 className={`badge ${isConvexConfigured ? "badge-success" : "badge-warning"}`}
               >
-                {isConvexConfigured ? "Convex listo" : "Configura Convex"}
+                {isConvexConfigured ? "Convex ready" : "Configure Convex"}
               </span>
             </div>
 
@@ -128,7 +132,7 @@ export default function Home() {
                     className={`chat ${isAgent ? "chat-start" : "chat-end"}`}
                   >
                     <div className="chat-header mb-1 text-sm opacity-70">
-                      {isAgent ? "Buscalo" : "Tú"}
+                      {isAgent ? "Buscalo" : "You"}
                     </div>
                     <div
                       className={`chat-bubble ${
@@ -151,16 +155,16 @@ export default function Home() {
               <label className="form-control">
                 <div className="label">
                   <span className="label-text">
-                    ¿Qué quieres que haga el agente?
+                    What do you need the agent to do?
                   </span>
                   <span className="label-text-alt text-xs opacity-60">
-                    Ejemplo: "Busca estudios en Jersey City bajo $2,000 y
-                    permite mascotas"
+                    Example: "Find studios in Jersey City under $2,000 and allow
+                    pets"
                   </span>
                 </div>
                 <textarea
                   className="textarea textarea-bordered min-h-24"
-                  placeholder="Describe tu misión inmobiliaria"
+                  placeholder="Describe your real-estate mission"
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   disabled={isSending}
@@ -169,15 +173,15 @@ export default function Home() {
               </label>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="text-sm opacity-70">
-                  El agente usará Browserbase + Stagehand en la siguiente
-                  iteración.
+                  Browserbase + Stagehand integration arrives in the next
+                  iteration.
                 </span>
                 <button
                   className={`btn btn-primary ${isSending ? "loading" : ""}`}
                   type="submit"
                   disabled={isSending || !isConvexConfigured}
                 >
-                  {isSending ? "Enviando" : "Enviar a Buscalo"}
+                  {isSending ? "Sending" : "Send to Buscalo"}
                 </button>
               </div>
             </form>

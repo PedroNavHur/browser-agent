@@ -10,10 +10,15 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@ai-sdk/openai": "2.0.32",
+    "@ai-sdk/provider-utils": "3.0.7",
+    "@convex-dev/agent": "^0.2.9",
+    "ai": "5.0.29",
     "convex": "^1.27.1",
     "next": "15.5.3",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
