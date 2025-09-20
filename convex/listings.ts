@@ -147,3 +147,25 @@ export const favoriteListing = mutation({
     return null;
   },
 });
+
+export const removeListing = mutation({
+  args: {
+    listingId: v.id("listings"),
+  },
+  returns: v.null(),
+  handler: async (ctx, { listingId }) => {
+    await ctx.db.delete(listingId);
+    return null;
+  },
+});
+
+export const removeFavorite = mutation({
+  args: {
+    favoriteId: v.id("favorites"),
+  },
+  returns: v.null(),
+  handler: async (ctx, { favoriteId }) => {
+    await ctx.db.delete(favoriteId);
+    return null;
+  },
+});

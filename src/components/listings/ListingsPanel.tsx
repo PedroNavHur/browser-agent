@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import { HeartPlus, Phone, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { api } from "@/lib/convexApi";
 
@@ -24,10 +25,20 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
   const listings = useQuery(api.listings.listListings, {}) ?? [];
   const favorites = useQuery(api.listings.listFavorites, {}) ?? [];
   const favoriteListing = useMutation(api.listings.favoriteListing);
+  const removeListing = useMutation(api.listings.removeListing);
+  const removeFavorite = useMutation(api.listings.removeFavorite);
 
   const handleFavorite = async (listingId: string) => {
     await favoriteListing({ listingId });
     onFavorited?.(listingId);
+  };
+
+  const handleRemoveListing = async (listingId: string) => {
+    await removeListing({ listingId });
+  };
+
+  const handleRemoveFavorite = async (favoriteId: string) => {
+    await removeFavorite({ favoriteId });
   };
 
   return (
@@ -54,12 +65,16 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
                 key={listing.id}
                 listing={listing}
                 onFavorite={handleFavorite}
+                onRemove={handleRemoveListing}
               />
             ))
           )}
         </div>
 
-        <FavoritesList favorites={favorites} />
+        <FavoritesList
+          favorites={favorites}
+          onRemoveFavorite={handleRemoveFavorite}
+        />
       </div>
     </section>
   );
@@ -68,9 +83,10 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
 type ListingCardProps = {
   listing: Listing;
   onFavorite: (listingId: string) => void;
+  onRemove: (listingId: string) => void;
 };
 
-function ListingCard({ listing, onFavorite }: ListingCardProps) {
+function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
   return (
     <article className="flex gap-3 rounded-box border border-base-300 bg-base-200/60 p-3">
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
@@ -97,7 +113,10 @@ function ListingCard({ listing, onFavorite }: ListingCardProps) {
         </div>
         <p className="text-sm opacity-80">{listing.address}</p>
         {listing.phone ? (
-          <p className="text-xs opacity-60">☎ {listing.phone}</p>
+          <p className="flex items-center gap-1 text-xs opacity-60">
+            <Phone className="h-3 w-3" aria-hidden />
+            <span>{listing.phone}</span>
+          </p>
         ) : null}
         <div className="mt-2 flex items-center gap-2">
           <button
@@ -105,7 +124,16 @@ function ListingCard({ listing, onFavorite }: ListingCardProps) {
             type="button"
             onClick={() => onFavorite(listing.id)}
           >
+            <HeartPlus className="h-4 w-4" aria-hidden />
             Favorite
+          </button>
+          <button
+            className="btn btn-sm btn-ghost"
+            type="button"
+            onClick={() => onRemove(listing.id)}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden />
+            Remove
           </button>
         </div>
       </div>
@@ -115,9 +143,10 @@ function ListingCard({ listing, onFavorite }: ListingCardProps) {
 
 type FavoritesListProps = {
   favorites: Listing[];
+  onRemoveFavorite: (favoriteId: string) => void;
 };
 
-function FavoritesList({ favorites }: FavoritesListProps) {
+function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
   return (
     <footer className="space-y-3">
       <div className="flex items-center justify-between">
@@ -154,8 +183,24 @@ function FavoritesList({ favorites }: FavoritesListProps) {
                 </a>
                 <span className="text-sm opacity-80">{favorite.address}</span>
                 {favorite.phone ? (
-                  <span className="text-xs opacity-60">☎ {favorite.phone}</span>
+                  <span className="flex items-center gap-1 text-xs opacity-60">
+                    <Phone className="h-3 w-3" aria-hidden />
+                    {favorite.phone}
+                  </span>
                 ) : null}
+              </div>
+              <div className="flex flex-col justify-between text-right">
+                <span className="font-semibold text-primary">
+                  ${favorite.price.toLocaleString("en-US")}
+                </span>
+                <button
+                  className="btn btn-xs btn-ghost"
+                  type="button"
+                  onClick={() => onRemoveFavorite(favorite.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                  Remove
+                </button>
               </div>
             </article>
           ))
