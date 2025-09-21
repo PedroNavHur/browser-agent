@@ -120,7 +120,7 @@ export const searchEstate = createTool({
 
       return [];
     } catch (error) {
-      console.warn("Stagehand extraction failed, falling back to mock data", {
+      console.warn("Stagehand extraction failed", {
         error,
       });
 

@@ -14,6 +14,14 @@ import type * as agentTypes from "../agentTypes.js";
 import type * as agentUtils from "../agentUtils.js";
 import type * as listings from "../listings.js";
 import type * as logs from "../logs.js";
+import type * as stagehand_extractionWorkflow from "../stagehand/extractionWorkflow.js";
+import type * as stagehand_filteringUtils from "../stagehand/filteringUtils.js";
+import type * as stagehand_imageBackfill from "../stagehand/imageBackfill.js";
+import type * as stagehand_listingNormalization from "../stagehand/listingNormalization.js";
+import type * as stagehand_logging from "../stagehand/logging.js";
+import type * as stagehand_pagePreparation from "../stagehand/pagePreparation.js";
+import type * as stagehand_stagehandConfig from "../stagehand/stagehandConfig.js";
+import type * as stagehand_types from "../stagehand/types.js";
 import type * as stagehand from "../stagehand.js";
 
 import type {
@@ -37,6 +45,14 @@ declare const fullApi: ApiFromModules<{
   agentUtils: typeof agentUtils;
   listings: typeof listings;
   logs: typeof logs;
+  "stagehand/extractionWorkflow": typeof stagehand_extractionWorkflow;
+  "stagehand/filteringUtils": typeof stagehand_filteringUtils;
+  "stagehand/imageBackfill": typeof stagehand_imageBackfill;
+  "stagehand/listingNormalization": typeof stagehand_listingNormalization;
+  "stagehand/logging": typeof stagehand_logging;
+  "stagehand/pagePreparation": typeof stagehand_pagePreparation;
+  "stagehand/stagehandConfig": typeof stagehand_stagehandConfig;
+  "stagehand/types": typeof stagehand_types;
   stagehand: typeof stagehand;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
