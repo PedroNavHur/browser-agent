@@ -5,6 +5,7 @@ import { Stagehand } from "@browserbasehq/stagehand";
 import { v } from "convex/values";
 import { z } from "zod";
 import { action } from "./_generated/server";
+import { api } from "./_generated/api";
 
 const extractionSchema = z.object({
   listings: z
@@ -17,7 +18,7 @@ const extractionSchema = z.object({
         address: z.string().min(1).optional(),
       })
     )
-    .max(10)
+    .max(50)
     .default([]),
 });
 
@@ -60,6 +61,9 @@ export const runApartmentsExtraction = action({
     maxPrice: v.optional(v.number()),
     bedrooms: v.optional(v.union(v.literal("studio"), v.number())),
     pets: v.optional(v.boolean()),
+    limit: v.optional(v.number()),
+    threadId: v.optional(v.string()),
+    runId: v.optional(v.string()),
   },
   returns: v.object({
     liveViewUrl: v.string(),
@@ -80,6 +84,7 @@ export const runApartmentsExtraction = action({
     extractedCount: v.number(),
     filteredCount: v.number(),
     rejectedCount: v.number(),
+    logs: v.array(v.string()),
   }),
   handler: async (_ctx, args) => {
     const browserbaseApiKey = process.env.BROWSERBASE_API_KEY;
@@ -98,6 +103,53 @@ export const runApartmentsExtraction = action({
         "Missing OPENAI_API_KEY (or CONVEX_OPENAI_API_KEY) environment variable."
       );
     }
+
+    const threadId = args.threadId ?? null;
+    let runId = args.runId ?? `run-${Date.now()}`;
+    const allLogs: string[] = [];
+    const logBuffer: string[] = [];
+    let runStarted = false;
+
+    const recordLog = (raw: string) => {
+      const message = raw.trim();
+      if (!message) {
+        return;
+      }
+      allLogs.push(message);
+      if (threadId) {
+        logBuffer.push(message);
+      }
+    };
+
+    const startRunIfNeeded = async (initialMessage?: string) => {
+      if (!threadId || runStarted) {
+        return;
+      }
+      runStarted = true;
+      await _ctx.runMutation(api.logs.startRun, {
+        threadId,
+        runId,
+        initialMessage,
+      });
+    };
+
+    const flushLogs = async () => {
+      if (!threadId || logBuffer.length === 0) {
+        return;
+      }
+      const pending = logBuffer.splice(0, logBuffer.length);
+      await _ctx.runMutation(api.logs.appendLogs, {
+        threadId,
+        runId,
+        messages: pending,
+      });
+    };
+
+    const requestedLimit =
+      typeof args.limit === "number" && Number.isFinite(args.limit)
+        ? Math.max(1, Math.floor(args.limit))
+        : null;
+    const resultLimit = Math.min(50, Math.max(25, requestedLimit ?? 50));
 
     const stagehand = new Stagehand({
       env: "BROWSERBASE",
@@ -120,14 +172,18 @@ export const runApartmentsExtraction = action({
             typeof logLine.message === "string"
               ? logLine.message
               : JSON.stringify(logLine.message);
+          const formatted = category && category !== "general"
+            ? `Agent ${category}: ${message}`
+            : `Agent ${message}`;
           console.log(`stagehand:${category} ${message}`);
+          recordLog(formatted);
         }
       },
     });
 
     const filterInstructions = buildFilterInstructions(args);
     const instruction =
-      "Extract up to five rental listing cards that are currently visible on the page. " +
+      `Extract the rental listing cards currently visible on the page (aim for up to ${resultLimit}). ` +
       "For each, provide the title, displayed monthly price text, the address shown on the card, primary image URL (if available), and the detail page URL.";
 
     let liveViewUrl: string | undefined;
@@ -135,10 +191,15 @@ export const runApartmentsExtraction = action({
     let debugUrl: string | undefined;
 
     try {
+      await startRunIfNeeded("Starting Browserbase session...");
       const initResult = await stagehand.init();
       liveViewUrl = initResult.sessionUrl ?? initResult.debugUrl;
       sessionId = initResult.sessionId;
       debugUrl = initResult.debugUrl;
+      if (sessionId) {
+        recordLog(`Session ID: ${sessionId}`);
+      }
+      await flushLogs();
 
       const page = stagehand.page;
       const slug =
@@ -148,26 +209,97 @@ export const runApartmentsExtraction = action({
       const slugUrl = buildSearchUrl(slug, args.maxPrice);
 
       console.log("stagehand:navigate", { url: slugUrl });
+      recordLog(`Navigating to ${slugUrl}`);
+      await flushLogs();
       await page.goto(slugUrl);
 
       await page.act(
         "Close any popups or overlays so that the listings grid and map are both visible."
       );
+      recordLog("Ensuring map and results are visible");
+      await flushLogs();
 
       for (const step of filterInstructions) {
+        recordLog(step);
+        await flushLogs();
         await page.act(step);
       }
 
       await page.act(
-        "Scroll the listings panel slowly through multiple screens, pausing after each movement so new property cards can load. Keep going until you reach the end or no new cards appear, then scroll back near the top leaving several cards visible."
+        `Scroll the listings panel slowly through multiple screens, pausing after each movement so new property cards can load. Keep going until either the bottom is reached or roughly ${resultLimit} unique property cards have appeared, then scroll back near the top leaving several cards visible.`
       );
+      recordLog("Scrolling through results to load more listings");
+      await flushLogs();
 
       const extracted = await page.extract({
         instruction,
         schema: extractionSchema,
       });
+      recordLog("Extracted listing cards from the page");
+      await flushLogs();
 
       const normalized = normalizeListings(extracted.listings ?? []);
+      if (normalized.some((listing) => !listing.imageUrl)) {
+        recordLog("Attempting to backfill missing image URLs from the DOM");
+        await flushLogs();
+        try {
+          const lookupTargets = normalized
+            .filter((listing) => !listing.imageUrl)
+            .map((listing) => listing.url);
+          const resolvedImages = await page.evaluate(
+            (urls) => {
+              const results: Record<string, string | null> = {};
+              const anchors = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+              for (const url of urls) {
+                const anchor = anchors.find((a) => a.href === url || a.href.startsWith(url));
+                if (!anchor) {
+                  results[url] = null;
+                  continue;
+                }
+                const card =
+                  anchor.closest('[data-test="placard"]') ||
+                  anchor.closest('[data-test="property-card"]') ||
+                  anchor.closest('[data-test="property-card-link"]') ||
+                  anchor.closest('[role="listitem"]') ||
+                  anchor.parentElement;
+                const img = (card ?? anchor).querySelector('img');
+                if (img) {
+                  const direct = img.getAttribute('src');
+                  const dataSrc = (img as HTMLImageElement).dataset?.src ?? (img as HTMLImageElement).dataset?.original;
+                  results[url] = direct ?? dataSrc ?? null;
+                } else {
+                  results[url] = null;
+                }
+              }
+              return results;
+            },
+            lookupTargets,
+          );
+          for (const listing of normalized) {
+            if (!listing.imageUrl) {
+              const resolved = resolvedImages[listing.url];
+              if (resolved) {
+                listing.imageUrl = sanitizeImageUrl(normalizeUrl(resolved));
+                if (listing.imageUrl) {
+                  recordLog(`Backfilled image for ${listing.title}`);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          recordLog(
+            `Image backfill failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
+        await flushLogs();
+      }
+      for (const listing of normalized) {
+        if (!listing.imageUrl) {
+          recordLog(`Listing missing image: ${listing.title}`);
+        }
+      }
       const { filtered, rejected } = filterListingsByConstraints(
         normalized,
         args
@@ -184,7 +316,7 @@ export const runApartmentsExtraction = action({
         );
       }
 
-      const constrained = filtered.slice(0, 5);
+      const constrained = filtered.slice(0, resultLimit);
       console.log(
         "stagehand:normalized_listings",
         normalized.length,
@@ -195,6 +327,10 @@ export const runApartmentsExtraction = action({
           url: listing.url,
         }))
       );
+      recordLog(
+        `Normalized ${normalized.length} listings, returning ${constrained.length}`
+      );
+      await flushLogs();
 
       return {
         liveViewUrl: liveViewUrl ?? "",
@@ -204,8 +340,10 @@ export const runApartmentsExtraction = action({
         extractedCount: normalized.length,
         filteredCount: constrained.length,
         rejectedCount: rejected.length,
+        logs: allLogs,
       };
     } finally {
+      await flushLogs().catch(() => undefined);
       await stagehand.close().catch(() => undefined);
     }
   },

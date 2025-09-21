@@ -23,4 +23,13 @@ export default defineSchema({
     url: v.string(),
     favoritedAt: v.number(),
   }).index("by_thread_url", ["threadId", "url"]),
+
+  execLogs: defineTable({
+    threadId: v.string(),
+    runId: v.string(),
+    message: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_thread_time", ["threadId", "createdAt"])
+    .index("by_thread_run", ["threadId", "runId", "createdAt"]),
 });

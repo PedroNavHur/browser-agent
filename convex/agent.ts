@@ -65,6 +65,9 @@ const searchEstate = createTool({
     const limit = args.limit ?? 3;
     const sharedTags = computeSharedTags(args);
     const { displayQuery, locationSlug } = normalizeLocation(args.query);
+    const activeThreadId = _ctx.threadId;
+    const threadId = activeThreadId ?? "public";
+    const runId = `${threadId}-${Date.now()}`;
     try {
       const stagehandResult = await _ctx.runAction(
         api.stagehand.runApartmentsExtraction,
@@ -74,6 +77,9 @@ const searchEstate = createTool({
           maxPrice: args.maxPrice,
           bedrooms: args.bedrooms,
           pets: args.pets,
+          limit: limit,
+          threadId: activeThreadId ?? undefined,
+          runId,
         },
       );
 
@@ -92,12 +98,20 @@ const searchEstate = createTool({
           beds: listing.beds,
         })),
       });
+      if (activeThreadId) {
+        await _ctx.runMutation(api.logs.appendLogs, {
+          threadId: activeThreadId,
+          runId,
+          messages: [
+            `Agent run complete. Returning ${listings.length} listing${listings.length === 1 ? "" : "s"}.`,
+          ],
+        });
+      }
       if (listings.length > 0) {
         const transformed = listings.map((listing: StagehandListing) =>
           stagehandToSearchEstate(listing, sharedTags),
         );
 
-        const threadId = _ctx.threadId ?? "public";
         await _ctx.runMutation(api.listings.recordListings, {
           threadId,
           listings: transformed.map((listing: SearchEstateResult) => ({
@@ -113,15 +127,32 @@ const searchEstate = createTool({
         return transformed;
       }
 
-      console.warn(
-        "Stagehand returned no listings; falling back to preview data.",
-      );
-      return generateMockListings(args, limit);
+      if (activeThreadId) {
+        await _ctx.runMutation(api.logs.appendLogs, {
+          threadId: activeThreadId,
+          runId,
+          messages: [
+            "No listings matched the filters. Let the user know nothing was found.",
+          ],
+        });
+      }
+      return [];
     } catch (error) {
       console.warn("Stagehand extraction failed, falling back to mock data", {
         error,
       });
-      return generateMockListings(args, limit);
+      if (activeThreadId) {
+        await _ctx.runMutation(api.logs.appendLogs, {
+          threadId: activeThreadId,
+          runId,
+          messages: [
+            `Stagehand extraction failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          ],
+        });
+      }
+      return [];
     }
   },
 });

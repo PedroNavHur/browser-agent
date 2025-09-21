@@ -38,11 +38,11 @@ export function ChatComposer({
           Browserbase + Stagehand integration arrives in the next iteration.
         </span>
         <button
-          className={`btn btn-primary ${isSending ? "loading" : ""}`}
+          className="btn btn-primary"
           type="submit"
           disabled={isSending || !isConvexConfigured}
         >
-          {isSending ? "Sending" : "Send to Buscalo"}
+          {isSending ? "Running..." : "Send to Buscalo"}
         </button>
       </div>
     </form>

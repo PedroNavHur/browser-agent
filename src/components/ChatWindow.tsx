@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { convexClient } from "@/app/convex-provider";
 import { api } from "@/lib/convexApi";
+import { AgentActivityLog } from "./AgentActivityLog";
 import { ChatComposer } from "./chat/ChatComposer";
 import { ChatHeader } from "./chat/ChatHeader";
 import { ChatMessageList } from "./chat/ChatMessageList";
@@ -116,21 +117,27 @@ export function ChatWindow() {
             </div>
           </section>
 
-          {isConvexConfigured ? (
-            <ListingsPanel />
-          ) : (
-            <section className="card h-full bg-base-100 shadow-xl">
-              <div className="card-body flex h-full flex-col items-center justify-center gap-3 text-center opacity-70">
-                <p>
-                  Add your Convex deployment URL to enable live listing storage.
-                </p>
-                <p className="text-sm">
-                  The listings panel will populate once the displayListings tool
-                  can sync data to your Convex tables.
-                </p>
-              </div>
-            </section>
-          )}
+          <div className="flex h-full flex-col gap-4">
+            {isConvexConfigured ? (
+              <>
+                <AgentActivityLog threadId={threadId} isRunning={isSending} />
+                <ListingsPanel />
+              </>
+            ) : (
+              <section className="card h-full bg-base-100 shadow-xl">
+                <div className="card-body flex h-full flex-col items-center justify-center gap-3 text-center opacity-70">
+                  <p>
+                    Add your Convex deployment URL to enable live listing storage
+                    and activity logs.
+                  </p>
+                  <p className="text-sm">
+                    Once configured, Buscalo will surface real-time logs and
+                    listings from your agent runs.
+                  </p>
+                </div>
+              </section>
+            )}
+          </div>
         </div>
       </div>
     </main>

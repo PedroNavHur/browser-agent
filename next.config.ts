@@ -13,19 +13,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "images1.apartments.com",
+        hostname: "*.apartments.com",
       },
       {
         protocol: "https",
-        hostname: "images2.apartments.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images3.apartments.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images4.apartments.com",
+        hostname: "*.aptcdn.com",
       },
       {
         protocol: "https",

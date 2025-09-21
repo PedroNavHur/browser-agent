@@ -6,8 +6,6 @@ import { HeartPlus, Phone, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { api } from "@/lib/convexApi";
 
-const FALLBACK_IMAGE = "https://images.buscalo.dev/placeholder/apartment.jpg";
-
 type ListingBase = {
   title: string;
   address: string;
@@ -17,16 +15,19 @@ type ListingBase = {
   url: string;
 };
 
-type LiveListing = ListingBase & { id: Id<"listings"> };
-type FavoriteListing = ListingBase & { id: Id<"favorites"> };
+type LiveListing = ListingBase & { id: Id<"listings">; createdAt: number };
+type FavoriteListing = ListingBase & {
+  id: Id<"favorites">;
+  favoritedAt: number;
+};
 
 type ListingsPanelProps = {
   onFavorited?: (listingId: Id<"listings">) => void;
 };
 
 export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
-  const listings = useQuery(api.listings.listListings, {}) ?? [];
-  const favorites = useQuery(api.listings.listFavorites, {}) ?? [];
+  const listings = (useQuery(api.listings.listListings, {}) ?? []) as LiveListing[];
+  const favorites = (useQuery(api.listings.listFavorites, {}) ?? []) as FavoriteListing[];
   const favoriteListing = useMutation(api.listings.favoriteListing);
   const removeListing = useMutation(api.listings.removeListing);
   const removeFavorite = useMutation(api.listings.removeFavorite);
@@ -63,7 +64,7 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
               Ask Buscalo to pull some listings and they'll appear here.
             </div>
           ) : (
-            listings.map((listing: LiveListing) => (
+            listings.map((listing) => (
               <ListingCard
                 key={listing.id}
                 listing={listing}
@@ -93,12 +94,18 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
   return (
     <article className="flex gap-3 rounded-box border border-base-300 bg-base-200/60 p-3">
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
-        <Image
-          src={listing.imageUrl ?? FALLBACK_IMAGE}
-          alt={listing.title}
-          fill
-          className="object-cover"
-        />
+        {listing.imageUrl ? (
+          <Image
+            src={listing.imageUrl}
+            alt={listing.title}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-base-200 text-xs text-base-content/60">
+            No image
+          </div>
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-center justify-between gap-3">
@@ -162,18 +169,24 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
             Favorited listings will move here for quick reference.
           </p>
         ) : (
-          favorites.map((favorite: FavoriteListing) => (
+          favorites.map((favorite) => (
             <article
               key={favorite.id}
               className="flex gap-3 rounded-box border border-base-200 bg-base-200/40 p-3"
             >
               <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
-                <Image
-                  src={favorite.imageUrl ?? FALLBACK_IMAGE}
-                  alt={favorite.title}
-                  fill
-                  className="object-cover"
-                />
+                {favorite.imageUrl ? (
+                  <Image
+                    src={favorite.imageUrl}
+                    alt={favorite.title}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-base-200 text-xs text-base-content/60">
+                    No image
+                  </div>
+                )}
               </div>
               <div className="flex flex-1 flex-col gap-1">
                 <a
