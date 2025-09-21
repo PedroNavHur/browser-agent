@@ -1,7 +1,7 @@
 "use node";
 
-import { Stagehand } from "@browserbasehq/stagehand";
 import type { LogLine } from "@browserbasehq/stagehand";
+import { Stagehand } from "@browserbasehq/stagehand";
 import { v } from "convex/values";
 import { z } from "zod";
 import { action } from "./_generated/server";
@@ -11,14 +11,13 @@ const extractionSchema = z.object({
     .array(
       z.object({
         title: z.string().min(1),
-        address: z.string().min(1).optional(),
         price: z.string().min(1),
-        phone: z.string().optional(),
-        imageUrl: z.string().url().optional(),
         url: z.string().min(1),
+        imageUrl: z.string().url().optional(),
+        address: z.string().min(1).optional(),
       })
     )
-    .max(5)
+    .max(10)
     .default([]),
 });
 
@@ -29,15 +28,35 @@ type NormalizedListing = {
   address?: string;
   price: number;
   priceRaw: string;
+  beds?: number;
   url: string;
   imageUrl?: string;
-  phone?: string;
   source: string;
 };
+
+type RejectionReason = {
+  type: "price" | "location" | "bedrooms";
+  detail: string;
+};
+
+type RejectedListing = {
+  listing: NormalizedListing;
+  reasons: RejectionReason[];
+};
+
+const ALLOWED_IMAGE_HOSTS = new Set([
+  "apartments.com",
+  "images1.apartments.com",
+  "images2.apartments.com",
+  "images3.apartments.com",
+  "images4.apartments.com",
+  "aptcdn.com",
+]);
 
 export const runApartmentsExtraction = action({
   args: {
     query: v.optional(v.string()),
+    locationSlug: v.optional(v.string()),
     maxPrice: v.optional(v.number()),
     bedrooms: v.optional(v.union(v.literal("studio"), v.number())),
     pets: v.optional(v.boolean()),
@@ -52,17 +71,21 @@ export const runApartmentsExtraction = action({
         address: v.optional(v.string()),
         price: v.number(),
         priceRaw: v.string(),
+        beds: v.optional(v.number()),
         url: v.string(),
         imageUrl: v.optional(v.string()),
-        phone: v.optional(v.string()),
         source: v.string(),
       })
     ),
+    extractedCount: v.number(),
+    filteredCount: v.number(),
+    rejectedCount: v.number(),
   }),
   handler: async (_ctx, args) => {
     const browserbaseApiKey = process.env.BROWSERBASE_API_KEY;
     const browserbaseProjectId = process.env.BROWSERBASE_PROJECT_ID;
-    const convexOpenAiKey = process.env.OPENAI_API_KEY ?? process.env.CONVEX_OPENAI_API_KEY;
+    const convexOpenAiKey =
+      process.env.OPENAI_API_KEY ?? process.env.CONVEX_OPENAI_API_KEY;
 
     if (!browserbaseApiKey) {
       throw new Error("Missing BROWSERBASE_API_KEY environment variable.");
@@ -72,7 +95,7 @@ export const runApartmentsExtraction = action({
     }
     if (!convexOpenAiKey) {
       throw new Error(
-        "Missing OPENAI_API_KEY (or CONVEX_OPENAI_API_KEY) environment variable.",
+        "Missing OPENAI_API_KEY (or CONVEX_OPENAI_API_KEY) environment variable."
       );
     }
 
@@ -102,11 +125,10 @@ export const runApartmentsExtraction = action({
       },
     });
 
-    const filtersDescription = buildFilterPrompt(args);
+    const filterInstructions = buildFilterInstructions(args);
     const instruction =
       "Extract up to five rental listing cards that are currently visible on the page. " +
-      "For each, provide the title, address, displayed monthly price text, contact phone if available, " +
-      "primary image URL, and the detail page URL.";
+      "For each, provide the title, displayed monthly price text, the address shown on the card, primary image URL (if available), and the detail page URL.";
 
     let liveViewUrl: string | undefined;
     let sessionId: string | undefined;
@@ -119,24 +141,25 @@ export const runApartmentsExtraction = action({
       debugUrl = initResult.debugUrl;
 
       const page = stagehand.page;
+      const slug =
+        sanitizeSlug(args.locationSlug) ||
+        sanitizeSlug(args.query) ||
+        "jersey-city-nj";
+      const slugUrl = buildSearchUrl(slug, args.maxPrice);
 
-      await page.goto("https://www.apartments.com/");
+      console.log("stagehand:navigate", { url: slugUrl });
+      await page.goto(slugUrl);
 
-      const searchQuery = args.query ?? "Jersey City, NJ";
       await page.act(
-        `Search for rentals in ${searchQuery} on this page and submit the search form if necessary, ` +
-          "then wait for the results to load."
+        "Close any popups or overlays so that the listings grid and map are both visible."
       );
 
-      if (filtersDescription) {
-        await page.act(
-          `Apply the following filters using the page controls: ${filtersDescription}. ` +
-            "Ensure the results list refreshes afterwards."
-        );
+      for (const step of filterInstructions) {
+        await page.act(step);
       }
 
       await page.act(
-        "Scroll through the results until at least five unique listing cards are visible, then stop scrolling."
+        "Scroll the listings panel slowly through multiple screens, pausing after each movement so new property cards can load. Keep going until you reach the end or no new cards appear, then scroll back near the top leaving several cards visible."
       );
 
       const extracted = await page.extract({
@@ -145,21 +168,42 @@ export const runApartmentsExtraction = action({
       });
 
       const normalized = normalizeListings(extracted.listings ?? []);
+      const { filtered, rejected } = filterListingsByConstraints(
+        normalized,
+        args
+      );
+      if (rejected.length > 0) {
+        console.log(
+          "stagehand:filtered_out",
+          rejected.map(entry => ({
+            title: entry.listing.title,
+            price: entry.listing.price,
+            address: entry.listing.address,
+            reasons: entry.reasons.map(reason => `${reason.type}: ${reason.detail}`),
+          }))
+        );
+      }
+
+      const constrained = filtered.slice(0, 5);
       console.log(
         "stagehand:normalized_listings",
         normalized.length,
-        normalized.map((listing) => ({
+        constrained.length,
+        constrained.map(listing => ({
           title: listing.title,
           price: listing.price,
           url: listing.url,
-        })),
+        }))
       );
 
       return {
         liveViewUrl: liveViewUrl ?? "",
         sessionId,
         debugUrl,
-        listings: normalized,
+        listings: constrained,
+        extractedCount: normalized.length,
+        filteredCount: constrained.length,
+        rejectedCount: rejected.length,
       };
     } finally {
       await stagehand.close().catch(() => undefined);
@@ -167,7 +211,7 @@ export const runApartmentsExtraction = action({
   },
 });
 
-function buildFilterPrompt({
+function buildFilterInstructions({
   maxPrice,
   bedrooms,
   pets,
@@ -175,24 +219,31 @@ function buildFilterPrompt({
   maxPrice?: number;
   bedrooms?: string | number;
   pets?: boolean;
-}): string {
-  const filters: string[] = [];
+}): string[] {
+  const steps: string[] = [];
 
-  if (typeof maxPrice === "number") {
-    filters.push(`set the maximum monthly rent to $${Math.round(maxPrice)}`);
-  }
-
-  if (bedrooms === "studio" || bedrooms === 0) {
-    filters.push("filter for studio apartments");
-  } else if (typeof bedrooms === "number") {
-    filters.push(`filter for ${bedrooms} bedroom units`);
+  if (bedrooms === "studio" || bedrooms === 0 || typeof bedrooms === "number") {
+    let optionLabel = "Studio+";
+    let descriptor = "studio (0 bedroom)";
+    if (typeof bedrooms === "number" && bedrooms > 0) {
+      optionLabel = `${bedrooms}+`;
+      descriptor = `${bedrooms}-bedroom`;
+    }
+    steps.push(
+      'Click the "Beds/Baths" filter button above the results so the beds selector popup stays open.'
+    );
+    steps.push(
+      `Inside the Beds/Baths popup, select the "${optionLabel}" option so only ${descriptor} listings remain, then apply or close the beds filter and wait for the list to refresh.`
+    );
   }
 
   if (pets === true) {
-    filters.push("enable the pets allowed filter");
+    steps.push(
+      "Enable any pets-allowed filter so the results only include pet-friendly properties and wait for the list to update."
+    );
   }
 
-  return filters.join(" and ");
+  return steps;
 }
 
 function normalizeListings(listings: ExtractedListing[]): NormalizedListing[] {
@@ -201,7 +252,7 @@ function normalizeListings(listings: ExtractedListing[]): NormalizedListing[] {
     const price = parsePrice(priceRaw);
     const normalizedUrl = normalizeUrl(listing.url);
     const imageUrl = listing.imageUrl
-      ? normalizeUrl(listing.imageUrl)
+      ? sanitizeImageUrl(normalizeUrl(listing.imageUrl))
       : undefined;
 
     return {
@@ -209,21 +260,25 @@ function normalizeListings(listings: ExtractedListing[]): NormalizedListing[] {
       address: listing.address?.trim(),
       price,
       priceRaw,
+      beds: parseBedroomCount(`${listing.title} ${listing.address ?? ""}`),
       url: normalizedUrl,
       imageUrl,
-      phone: listing.phone?.trim(),
       source: "apartments.com",
     };
   });
 }
 
 function parsePrice(priceText: string): number {
-  const cleaned = priceText.replace(/[^0-9.]/g, "");
-  const parsed = Number.parseFloat(cleaned);
-  if (Number.isFinite(parsed)) {
-    return Math.round(parsed);
+  const matches = priceText.match(/\d[\d,.]*/g);
+  if (!matches || matches.length === 0) {
+    return 0;
   }
-  return 0;
+  const primary = matches[0].replace(/[,]/g, "");
+  const parsed = Number.parseFloat(primary);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  return Math.round(parsed);
 }
 
 function normalizeUrl(url: string): string {
@@ -232,4 +287,111 @@ function normalizeUrl(url: string): string {
   } catch (_error) {
     return url;
   }
+}
+
+function sanitizeImageUrl(imageUrl?: string): string | undefined {
+  if (!imageUrl) {
+    return undefined;
+  }
+  if (!/^https?:/i.test(imageUrl)) {
+    return undefined;
+  }
+  const lower = imageUrl.toLowerCase();
+  if (lower.includes("placeholder") || lower.includes("example.com")) {
+    return undefined;
+  }
+  try {
+    const hostname = new URL(imageUrl).hostname.toLowerCase();
+    if (
+      !ALLOWED_IMAGE_HOSTS.has(hostname) &&
+      !hostname.endsWith("apartments.com") &&
+      !hostname.endsWith("aptcdn.com")
+    ) {
+      return undefined;
+    }
+  } catch (_error) {
+    return undefined;
+  }
+  return imageUrl;
+}
+
+function buildSearchUrl(slug: string, maxPrice?: number): string {
+  const normalizedSlug = slug.length > 0 ? slug : "jersey-city-nj";
+  let url = `https://www.apartments.com/${normalizedSlug}/`;
+  if (typeof maxPrice === "number" && Number.isFinite(maxPrice)) {
+    const rounded = Math.max(0, Math.floor(maxPrice / 100) * 100);
+    if (rounded > 0) {
+      url = `https://www.apartments.com/${normalizedSlug}/under-${rounded}/`;
+    }
+  }
+  return url;
+}
+
+function sanitizeSlug(input?: string | null): string {
+  if (!input) {
+    return "";
+  }
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s/-]+/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
+
+function filterListingsByConstraints(
+  listings: NormalizedListing[],
+  filters: {
+    query?: string | null;
+    maxPrice?: number | null;
+    bedrooms?: string | number | null;
+  }
+): {
+  filtered: NormalizedListing[];
+  rejected: RejectedListing[];
+} {
+  const filtered: NormalizedListing[] = [];
+  const rejected: RejectedListing[] = [];
+
+  for (const listing of listings) {
+    const reasons: RejectionReason[] = [];
+
+    if (
+      typeof filters.maxPrice === "number" &&
+      listing.price > 0 &&
+      listing.price > filters.maxPrice
+    ) {
+      reasons.push({
+        type: "price",
+        detail: `Listing price $${listing.price.toLocaleString(
+          "en-US"
+        )} exceeds max $${filters.maxPrice.toLocaleString("en-US")}`,
+      });
+    }
+
+    if (reasons.length === 0) {
+      filtered.push(listing);
+    } else {
+      rejected.push({ listing, reasons });
+    }
+  }
+
+  return { filtered, rejected };
+}
+
+function parseBedroomCount(text: string): number | undefined {
+  const normalized = text.toLowerCase();
+  if (normalized.includes("studio")) {
+    return 0;
+  }
+  const match = normalized.match(/(\d+(?:\.\d+)?)\s*(?:bed|br|bedroom)/);
+  if (match) {
+    const value = Number.parseFloat(match[1]);
+    if (Number.isFinite(value)) {
+      return Math.round(value);
+    }
+  }
+  return undefined;
 }

@@ -28,6 +28,7 @@ type StagehandListing = {
   address?: string;
   price: number;
   priceRaw: string;
+  beds?: number;
   url: string;
   imageUrl?: string;
   phone?: string;
@@ -63,33 +64,43 @@ const searchEstate = createTool({
   handler: async (_ctx, args): Promise<SearchEstateResult[]> => {
     const limit = args.limit ?? 3;
     const sharedTags = computeSharedTags(args);
-
+    const { displayQuery, locationSlug } = normalizeLocation(args.query);
     try {
       const stagehandResult = await _ctx.runAction(
         api.stagehand.runApartmentsExtraction,
         {
-          query: args.query,
+          query: displayQuery,
+          locationSlug,
           maxPrice: args.maxPrice,
           bedrooms: args.bedrooms,
           pets: args.pets,
         },
       );
 
-      const listings = stagehandResult.listings.slice(0, limit);
-      console.log(
-        "searchEstate:stagehand_result",
-        listings.length,
-        listings.map((listing) => ({ title: listing.title, price: listing.price })),
-      );
+      const listings = (stagehandResult.listings ?? []).slice(
+        0,
+        limit,
+      ) as StagehandListing[];
+      console.log("searchEstate:stagehand_result", {
+        extracted: stagehandResult.extractedCount,
+        filtered: stagehandResult.filteredCount,
+        rejected: stagehandResult.rejectedCount,
+        returned: listings.length,
+        sample: listings.map((listing) => ({
+          title: listing.title,
+          price: listing.price,
+          beds: listing.beds,
+        })),
+      });
       if (listings.length > 0) {
-        const transformed = listings.map((listing) =>
+        const transformed = listings.map((listing: StagehandListing) =>
           stagehandToSearchEstate(listing, sharedTags),
         );
 
         const threadId = _ctx.threadId ?? "public";
         await _ctx.runMutation(api.listings.recordListings, {
           threadId,
-          listings: transformed.map((listing) => ({
+          listings: transformed.map((listing: SearchEstateResult) => ({
             title: listing.title,
             address: listing.address,
             price: listing.price,
@@ -101,13 +112,17 @@ const searchEstate = createTool({
 
         return transformed;
       }
+
+      console.warn(
+        "Stagehand returned no listings; falling back to preview data.",
+      );
+      return generateMockListings(args, limit);
     } catch (error) {
       console.warn("Stagehand extraction failed, falling back to mock data", {
         error,
       });
+      return generateMockListings(args, limit);
     }
-
-    return generateMockListings(args, limit);
   },
 });
 
@@ -183,12 +198,24 @@ function stagehandToSearchEstate(
   listing: StagehandListing,
   sharedTags: string[],
 ): SearchEstateResult {
-  const priceLabel = listing.priceRaw || `$${listing.price.toLocaleString("en-US")}`;
+  const priceLabel =
+    listing.priceRaw || `$${listing.price.toLocaleString("en-US")}`;
   const location = listing.address ?? "Address not provided";
+  const bedLabel =
+    listing.beds === undefined
+      ? undefined
+      : listing.beds === 0
+        ? "Studio"
+        : `${listing.beds} BR`;
   const tags = [
     ...sharedTags,
     listing.source,
     ...(listing.phone ? ["has_phone"] : []),
+    ...(listing.beds === 0
+      ? ["studio"]
+      : typeof listing.beds === "number"
+        ? [`${listing.beds}br`]
+        : []),
   ];
 
   return {
@@ -196,12 +223,190 @@ function stagehandToSearchEstate(
     price: listing.price,
     address: location,
     url: listing.url,
-    summary: `${listing.title} — ${priceLabel} • ${location}`,
+    summary: `${listing.title} — ${priceLabel} • ${location}${
+      bedLabel ? ` • ${bedLabel}` : ""
+    }`,
     tags,
     phone: listing.phone,
     imageUrl: listing.imageUrl,
   };
 }
+
+function normalizeLocation(input: string | undefined): {
+  displayQuery: string;
+  locationSlug: string;
+} {
+  const fallback = {
+    displayQuery: "New York, NY",
+    locationSlug: "new-york-ny",
+  };
+  if (!input) {
+    return fallback;
+  }
+
+  const trimmed = input.trim().toLowerCase();
+  if (trimmed.length === 0) {
+    return fallback;
+  }
+
+  if (/^[a-z0-9]+(?:-[a-z0-9]+)*-[a-z]{2}$/.test(trimmed)) {
+    return {
+      displayQuery: slugToDisplay(trimmed),
+      locationSlug: trimmed,
+    };
+  }
+
+  const cleaned = trimmed
+    .replace(/[\s,-]+/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .trim();
+
+  if (cleaned.length === 0) {
+    return fallback;
+  }
+
+  const parts = cleaned.split(/\s*,\s*/);
+  let cityPart = parts[0] ?? "new york";
+  let statePart = parts[1];
+
+  if (!statePart) {
+    const tokens = cityPart.split(/\s+/);
+    const last = tokens[tokens.length - 1];
+    const normalizedState = resolveState(last);
+    if (normalizedState) {
+      statePart = normalizedState;
+      cityPart = tokens.slice(0, -1).join(" ") || cityPart;
+    }
+  } else {
+    statePart = resolveState(statePart) ?? statePart;
+  }
+
+  if (!statePart) {
+    statePart = inferPopularState(cityPart) ?? "ny";
+  }
+
+  const slugCity = cityPart.replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-");
+  const slugState = statePart.toLowerCase();
+  const locationSlug = `${slugCity}-${slugState}`
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return {
+    displayQuery: `${toTitleCase(cityPart)}, ${slugState.toUpperCase()}`,
+    locationSlug: locationSlug || fallback.locationSlug,
+  };
+}
+
+function slugToDisplay(slug: string): string {
+  const parts = slug.split("-");
+  if (parts.length < 2) {
+    return "New York, NY";
+  }
+  const state = parts.pop() as string;
+  const city = parts.join(" ");
+  return `${toTitleCase(city)}, ${state.toUpperCase()}`;
+}
+
+function resolveState(token: string | undefined): string | undefined {
+  if (!token) return undefined;
+  const normalized = token.toLowerCase();
+  if (/^[a-z]{2}$/.test(normalized)) {
+    return normalized;
+  }
+  return STATE_ABBREVIATIONS[normalized];
+}
+
+function inferPopularState(city: string): string | undefined {
+  const key = city.toLowerCase();
+  return POPULAR_CITY_DEFAULTS[key];
+}
+
+function toTitleCase(text: string): string {
+  return text
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+const STATE_ABBREVIATIONS: Record<string, string> = {
+  alabama: "al",
+  alaska: "ak",
+  "american samoa": "as",
+  arizona: "az",
+  arkansas: "ar",
+  california: "ca",
+  colorado: "co",
+  connecticut: "ct",
+  delaware: "de",
+  florida: "fl",
+  georgia: "ga",
+  guam: "gu",
+  hawaii: "hi",
+  idaho: "id",
+  illinois: "il",
+  indiana: "in",
+  iowa: "ia",
+  kansas: "ks",
+  kentucky: "ky",
+  louisiana: "la",
+  maine: "me",
+  maryland: "md",
+  massachusetts: "ma",
+  michigan: "mi",
+  minnesota: "mn",
+  mississippi: "ms",
+  missouri: "mo",
+  montana: "mt",
+  nebraska: "ne",
+  nevada: "nv",
+  "new hampshire": "nh",
+  "new jersey": "nj",
+  "new mexico": "nm",
+  "new york": "ny",
+  "north carolina": "nc",
+  "north dakota": "nd",
+  ohio: "oh",
+  oklahoma: "ok",
+  oregon: "or",
+  pennsylvania: "pa",
+  "puerto rico": "pr",
+  "rhode island": "ri",
+  "south carolina": "sc",
+  "south dakota": "sd",
+  tennessee: "tn",
+  texas: "tx",
+  utah: "ut",
+  vermont: "vt",
+  "virgin islands": "vi",
+  virginia: "va",
+  washington: "wa",
+  "west virginia": "wv",
+  wisconsin: "wi",
+  wyoming: "wy",
+};
+
+const POPULAR_CITY_DEFAULTS: Record<string, string> = {
+  manhattan: "ny",
+  "new york": "ny",
+  brooklyn: "ny",
+  queens: "ny",
+  bronx: "ny",
+  chicago: "il",
+  houston: "tx",
+  phoenix: "az",
+  philadelphia: "pa",
+  dallas: "tx",
+  "los angeles": "ca",
+  miami: "fl",
+  atlanta: "ga",
+  seattle: "wa",
+  boston: "ma",
+  denver: "co",
+  austin: "tx",
+  orlando: "fl",
+  tampa: "fl",
+};
 
 export const buscaloAgent = new Agent(agentComponent, {
   name: "Buscalo",
@@ -211,6 +416,7 @@ export const buscaloAgent = new Agent(agentComponent, {
     "Explain what you can do today, what is on the roadmap, and how the Browserbase + Stagehand stack powers the workflow.",
     "When features are not yet implemented, be transparent and suggest next steps.",
     "Use the searchEstate tool to simulate listings and call displayListings to sync them into the UI tables.",
+    "When calling searchEstate, you MUST pass the city as a lowercase slug with a two-letter state abbreviation (e.g. 'manhattan-ny', 'jersey-city-nj'). Do not include spaces, commas, or extra words; if the user omits the state, infer the most likely U.S. state for that city and use it in the slug.",
     "Keep answers concise (3-4 sentences) and focus on actionable guidance for the user.",
   ].join(" "),
   tools: { searchEstate, displayListings },

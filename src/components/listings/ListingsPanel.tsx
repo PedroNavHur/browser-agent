@@ -1,5 +1,6 @@
 "use client";
 
+import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { HeartPlus, Phone, Trash2 } from "lucide-react";
 import Image from "next/image";
@@ -7,8 +8,7 @@ import { api } from "@/lib/convexApi";
 
 const FALLBACK_IMAGE = "https://images.buscalo.dev/placeholder/apartment.jpg";
 
-type Listing = {
-  id: string;
+type ListingBase = {
   title: string;
   address: string;
   price: number;
@@ -17,8 +17,11 @@ type Listing = {
   url: string;
 };
 
+type LiveListing = ListingBase & { id: Id<"listings"> };
+type FavoriteListing = ListingBase & { id: Id<"favorites"> };
+
 type ListingsPanelProps = {
-  onFavorited?: (listingId: string) => void;
+  onFavorited?: (listingId: Id<"listings">) => void;
 };
 
 export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
@@ -28,16 +31,16 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
   const removeListing = useMutation(api.listings.removeListing);
   const removeFavorite = useMutation(api.listings.removeFavorite);
 
-  const handleFavorite = async (listingId: string) => {
+  const handleFavorite = async (listingId: Id<"listings">) => {
     await favoriteListing({ listingId });
     onFavorited?.(listingId);
   };
 
-  const handleRemoveListing = async (listingId: string) => {
+  const handleRemoveListing = async (listingId: Id<"listings">) => {
     await removeListing({ listingId });
   };
 
-  const handleRemoveFavorite = async (favoriteId: string) => {
+  const handleRemoveFavorite = async (favoriteId: Id<"favorites">) => {
     await removeFavorite({ favoriteId });
   };
 
@@ -60,7 +63,7 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
               Ask Buscalo to pull some listings and they'll appear here.
             </div>
           ) : (
-            listings.map((listing) => (
+            listings.map((listing: LiveListing) => (
               <ListingCard
                 key={listing.id}
                 listing={listing}
@@ -81,9 +84,9 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
 }
 
 type ListingCardProps = {
-  listing: Listing;
-  onFavorite: (listingId: string) => void;
-  onRemove: (listingId: string) => void;
+  listing: LiveListing;
+  onFavorite: (listingId: Id<"listings">) => void;
+  onRemove: (listingId: Id<"listings">) => void;
 };
 
 function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
@@ -142,8 +145,8 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
 }
 
 type FavoritesListProps = {
-  favorites: Listing[];
-  onRemoveFavorite: (favoriteId: string) => void;
+  favorites: FavoriteListing[];
+  onRemoveFavorite: (favoriteId: Id<"favorites">) => void;
 };
 
 function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
@@ -159,7 +162,7 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
             Favorited listings will move here for quick reference.
           </p>
         ) : (
-          favorites.map((favorite) => (
+          favorites.map((favorite: FavoriteListing) => (
             <article
               key={favorite.id}
               className="flex gap-3 rounded-box border border-base-200 bg-base-200/40 p-3"
