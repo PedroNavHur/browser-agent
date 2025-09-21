@@ -91,6 +91,8 @@ type ListingCardProps = {
 };
 
 function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
+  const detailUrl = buildApartmentsLink(listing.address);
+
   return (
     <article className="flex gap-3 rounded-box border border-base-300 bg-base-200/60 p-3">
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
@@ -109,30 +111,34 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
       </div>
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-center justify-between gap-3">
+        {detailUrl ? (
           <a
-            href={listing.url}
+            href={detailUrl}
             target="_blank"
             rel="noreferrer"
             className="font-semibold hover:underline"
           >
             {listing.title}
           </a>
-          <span className="font-semibold text-primary">
-            ${listing.price.toLocaleString("en-US")}
-          </span>
-        </div>
-        <p className="text-sm opacity-80">{listing.address}</p>
-        {listing.phone ? (
-          <p className="flex items-center gap-1 text-xs opacity-60">
-            <Phone className="h-3 w-3" aria-hidden />
-            <span>{listing.phone}</span>
-          </p>
-        ) : null}
-        <div className="mt-2 flex items-center gap-2">
-          <button
-            className="btn btn-sm btn-primary"
-            type="button"
-            onClick={() => onFavorite(listing.id)}
+        ) : (
+          <span className="font-semibold">{listing.title}</span>
+        )}
+        <span className="font-semibold text-primary">
+          ${listing.price.toLocaleString("en-US")}
+        </span>
+      </div>
+      <p className="text-sm opacity-80">{listing.address}</p>
+          {listing.phone ? (
+            <p className="flex items-center gap-1 text-xs opacity-60">
+              <Phone className="h-3 w-3" aria-hidden />
+              <span>{listing.phone}</span>
+            </p>
+      ) : null}
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          className="btn btn-sm btn-primary"
+          type="button"
+          onClick={() => onFavorite(listing.id)}
           >
             <HeartPlus className="h-4 w-4" aria-hidden />
             Favorite
@@ -169,11 +175,13 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
             Favorited listings will move here for quick reference.
           </p>
         ) : (
-          favorites.map((favorite) => (
-            <article
-              key={favorite.id}
-              className="flex gap-3 rounded-box border border-base-200 bg-base-200/40 p-3"
-            >
+          favorites.map((favorite) => {
+            const favoriteUrl = buildApartmentsLink(favorite.address);
+            return (
+              <article
+                key={favorite.id}
+                className="flex gap-3 rounded-box border border-base-200 bg-base-200/40 p-3"
+              >
               <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
                 {favorite.imageUrl ? (
                   <Image
@@ -189,14 +197,18 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
                 )}
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <a
-                  href={favorite.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium hover:underline"
-                >
-                  {favorite.title}
-                </a>
+                {favoriteUrl ? (
+                  <a
+                    href={favoriteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium hover:underline"
+                  >
+                    {favorite.title}
+                  </a>
+                ) : (
+                  <span className="font-medium">{favorite.title}</span>
+                )}
                 <span className="text-sm opacity-80">{favorite.address}</span>
                 {favorite.phone ? (
                   <span className="flex items-center gap-1 text-xs opacity-60">
@@ -218,10 +230,26 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
                   Remove
                 </button>
               </div>
-            </article>
-          ))
+              </article>
+            );
+          })
         )}
       </div>
     </footer>
   );
+}
+
+function buildApartmentsLink(address?: string): string | undefined {
+  if (!address) {
+    return undefined;
+  }
+  const normalized = address
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+  if (normalized.length === 0) {
+    return undefined;
+  }
+  return `https://www.apartments.com/${normalized}`;
 }

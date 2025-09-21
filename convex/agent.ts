@@ -29,7 +29,6 @@ type StagehandListing = {
   price: number;
   priceRaw: string;
   beds?: number;
-  url: string;
   imageUrl?: string;
   phone?: string;
   source: string;
@@ -169,7 +168,7 @@ const displayListings = createTool({
           price: z.number(),
           phone: z.string().optional(),
           imageUrl: z.string().url().optional(),
-          url: z.string().url(),
+          url: z.string().url().optional(),
         }),
       )
       .min(1)
@@ -179,7 +178,10 @@ const displayListings = createTool({
     const threadId = ctx.threadId ?? "public";
     await ctx.runMutation(api.listings.recordListings, {
       threadId,
-      listings,
+      listings: listings.map((listing) => ({
+        ...listing,
+        url: listing.url ?? "",
+      })),
     });
     return `Stored ${listings.length} listing${listings.length === 1 ? "" : "s"} for display.`;
   },
@@ -253,7 +255,7 @@ function stagehandToSearchEstate(
     title: listing.title,
     price: listing.price,
     address: location,
-    url: listing.url,
+    url: "",
     summary: `${listing.title} — ${priceLabel} • ${location}${
       bedLabel ? ` • ${bedLabel}` : ""
     }`,
