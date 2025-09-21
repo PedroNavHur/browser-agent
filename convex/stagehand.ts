@@ -13,7 +13,6 @@ const extractionSchema = z.object({
       z.object({
         title: z.string().min(1),
         price: z.string().min(1),
-        url: z.string().min(1),
         imageUrl: z.string().url().optional(),
         address: z.string().min(1).optional(),
       })
@@ -107,8 +106,18 @@ export const runApartmentsExtraction = action({
     const threadId = args.threadId ?? null;
     let runId = args.runId ?? `run-${Date.now()}`;
     const allLogs: string[] = [];
-    const logBuffer: string[] = [];
     let runStarted = false;
+
+    const sendLog = async (messages: string[]) => {
+      if (!threadId || messages.length === 0) {
+        return;
+      }
+      await _ctx.runMutation(api.logs.appendLogs, {
+        threadId,
+        runId,
+        messages,
+      });
+    };
 
     const recordLog = (raw: string) => {
       const message = raw.trim();
@@ -117,7 +126,7 @@ export const runApartmentsExtraction = action({
       }
       allLogs.push(message);
       if (threadId) {
-        logBuffer.push(message);
+        void sendLog([message]).catch(() => undefined);
       }
     };
 
@@ -131,18 +140,9 @@ export const runApartmentsExtraction = action({
         runId,
         initialMessage,
       });
-    };
-
-    const flushLogs = async () => {
-      if (!threadId || logBuffer.length === 0) {
-        return;
+      if (initialMessage) {
+        allLogs.push(initialMessage.trim());
       }
-      const pending = logBuffer.splice(0, logBuffer.length);
-      await _ctx.runMutation(api.logs.appendLogs, {
-        threadId,
-        runId,
-        messages: pending,
-      });
     };
 
     const requestedLimit =
@@ -182,9 +182,9 @@ export const runApartmentsExtraction = action({
     });
 
     const filterInstructions = buildFilterInstructions(args);
-    const instruction =
+const instruction =
       `Extract the rental listing cards currently visible on the page (aim for up to ${resultLimit}). ` +
-      "For each, provide the title, displayed monthly price text, the address shown on the card, primary image URL (if available), and the detail page URL.";
+      "For each, provide only the title, displayed monthly price text, and the primary image URL (if available).";
 
     let liveViewUrl: string | undefined;
     let sessionId: string | undefined;
@@ -199,7 +199,6 @@ export const runApartmentsExtraction = action({
       if (sessionId) {
         recordLog(`Session ID: ${sessionId}`);
       }
-      await flushLogs();
 
       const page = stagehand.page;
       const slug =
@@ -210,18 +209,15 @@ export const runApartmentsExtraction = action({
 
       console.log("stagehand:navigate", { url: slugUrl });
       recordLog(`Navigating to ${slugUrl}`);
-      await flushLogs();
       await page.goto(slugUrl);
 
       await page.act(
         "Close any popups or overlays so that the listings grid and map are both visible."
       );
       recordLog("Ensuring map and results are visible");
-      await flushLogs();
 
       for (const step of filterInstructions) {
         recordLog(step);
-        await flushLogs();
         await page.act(step);
       }
 
@@ -229,55 +225,49 @@ export const runApartmentsExtraction = action({
         `Scroll the listings panel slowly through multiple screens, pausing after each movement so new property cards can load. Keep going until either the bottom is reached or roughly ${resultLimit} unique property cards have appeared, then scroll back near the top leaving several cards visible.`
       );
       recordLog("Scrolling through results to load more listings");
-      await flushLogs();
 
       const extracted = await page.extract({
         instruction,
         schema: extractionSchema,
       });
       recordLog("Extracted listing cards from the page");
-      await flushLogs();
 
       const normalized = normalizeListings(extracted.listings ?? []);
+
       if (normalized.some((listing) => !listing.imageUrl)) {
         recordLog("Attempting to backfill missing image URLs from the DOM");
-        await flushLogs();
         try {
-          const lookupTargets = normalized
+          const lookupTitles = normalized
             .filter((listing) => !listing.imageUrl)
-            .map((listing) => listing.url);
-          const resolvedImages = await page.evaluate(
-            (urls) => {
-              const results: Record<string, string | null> = {};
-              const anchors = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
-              for (const url of urls) {
-                const anchor = anchors.find((a) => a.href === url || a.href.startsWith(url));
-                if (!anchor) {
-                  results[url] = null;
-                  continue;
-                }
-                const card =
-                  anchor.closest('[data-test="placard"]') ||
-                  anchor.closest('[data-test="property-card"]') ||
-                  anchor.closest('[data-test="property-card-link"]') ||
-                  anchor.closest('[role="listitem"]') ||
-                  anchor.parentElement;
-                const img = (card ?? anchor).querySelector('img');
-                if (img) {
-                  const direct = img.getAttribute('src');
-                  const dataSrc = (img as HTMLImageElement).dataset?.src ?? (img as HTMLImageElement).dataset?.original;
-                  results[url] = direct ?? dataSrc ?? null;
-                } else {
-                  results[url] = null;
-                }
+            .map((listing) => listing.title);
+          const resolvedImages = await page.evaluate((titles) => {
+            const results: Record<string, string | null> = {};
+            const cards = Array.from(
+              document.querySelectorAll('[data-test="placard"], [data-test="property-card"], article, [role="listitem"]'),
+            ) as HTMLElement[];
+            for (const title of titles) {
+              const lowered = title.toLowerCase();
+              const container = cards.find((card) =>
+                (card.textContent ?? '').toLowerCase().includes(lowered),
+              );
+              if (!container) {
+                results[title] = null;
+                continue;
               }
-              return results;
-            },
-            lookupTargets,
-          );
+              const img = container.querySelector('img');
+              if (img) {
+                const direct = img.getAttribute('src');
+                const dataSrc = (img as HTMLImageElement).dataset?.src ?? (img as HTMLImageElement).dataset?.original;
+                results[title] = direct ?? dataSrc ?? null;
+              } else {
+                results[title] = null;
+              }
+            }
+            return results;
+          }, lookupTitles);
           for (const listing of normalized) {
             if (!listing.imageUrl) {
-              const resolved = resolvedImages[listing.url];
+              const resolved = resolvedImages[listing.title];
               if (resolved) {
                 listing.imageUrl = sanitizeImageUrl(normalizeUrl(resolved));
                 if (listing.imageUrl) {
@@ -293,7 +283,6 @@ export const runApartmentsExtraction = action({
             }`,
           );
         }
-        await flushLogs();
       }
       for (const listing of normalized) {
         if (!listing.imageUrl) {
@@ -324,13 +313,11 @@ export const runApartmentsExtraction = action({
         constrained.map(listing => ({
           title: listing.title,
           price: listing.price,
-          url: listing.url,
         }))
       );
       recordLog(
         `Normalized ${normalized.length} listings, returning ${constrained.length}`
       );
-      await flushLogs();
 
       return {
         liveViewUrl: liveViewUrl ?? "",
@@ -343,7 +330,6 @@ export const runApartmentsExtraction = action({
         logs: allLogs,
       };
     } finally {
-      await flushLogs().catch(() => undefined);
       await stagehand.close().catch(() => undefined);
     }
   },
@@ -385,10 +371,9 @@ function buildFilterInstructions({
 }
 
 function normalizeListings(listings: ExtractedListing[]): NormalizedListing[] {
-  return listings.slice(0, 5).map(listing => {
+  return listings.map(listing => {
     const priceRaw = listing.price;
     const price = parsePrice(priceRaw);
-    const normalizedUrl = normalizeUrl(listing.url);
     const imageUrl = listing.imageUrl
       ? sanitizeImageUrl(normalizeUrl(listing.imageUrl))
       : undefined;
@@ -399,7 +384,7 @@ function normalizeListings(listings: ExtractedListing[]): NormalizedListing[] {
       price,
       priceRaw,
       beds: parseBedroomCount(`${listing.title} ${listing.address ?? ""}`),
-      url: normalizedUrl,
+      url: buildApartmentsFallbackUrl(listing.address),
       imageUrl,
       source: "apartments.com",
     };
@@ -477,6 +462,21 @@ function sanitizeSlug(input?: string | null): string {
     .replace(/-+/g, "-")
     .replace(/^-+/, "")
     .replace(/-+$/, "");
+}
+
+function buildApartmentsFallbackUrl(address?: string): string {
+  if (!address) {
+    return "https://www.apartments.com/";
+  }
+  const normalized = address
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+  if (normalized.length === 0) {
+    return "https://www.apartments.com/";
+  }
+  return `https://www.apartments.com/${normalized}`;
 }
 
 function filterListingsByConstraints(
