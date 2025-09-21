@@ -9,6 +9,9 @@
  */
 
 import type * as agent from "../agent.js";
+import type * as agentTools from "../agentTools.js";
+import type * as agentTypes from "../agentTypes.js";
+import type * as agentUtils from "../agentUtils.js";
 import type * as listings from "../listings.js";
 import type * as logs from "../logs.js";
 import type * as stagehand from "../stagehand.js";
@@ -29,6 +32,9 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
+  agentTools: typeof agentTools;
+  agentTypes: typeof agentTypes;
+  agentUtils: typeof agentUtils;
   listings: typeof listings;
   logs: typeof logs;
   stagehand: typeof stagehand;
