@@ -1,6 +1,7 @@
 "use client";
 
 import type { ChatMessage } from "./types";
+import { AgentSpeechButton } from "./AgentSpeechButton";
 
 type ChatMessageListProps = {
   messages: ChatMessage[];
@@ -26,7 +27,12 @@ export function ChatMessageList({ messages }: ChatMessageListProps) {
             >
               {message.text}
             </div>
-            {message.hint ? (
+            {isAgent ? (
+              <div className="chat-footer mt-1 flex flex-wrap items-center gap-3 text-xs opacity-80">
+                <AgentSpeechButton text={message.text} />
+                {message.hint ? <span>{message.hint}</span> : null}
+              </div>
+            ) : message.hint ? (
               <div className="chat-footer mt-1 text-xs opacity-60">
                 {message.hint}
               </div>

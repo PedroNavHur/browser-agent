@@ -1,11 +1,14 @@
 "use client";
 
+import { VoiceInputButton } from "./VoiceInputButton";
+
 type ChatComposerProps = {
   input: string;
   isSending: boolean;
   isConvexConfigured: boolean;
   onChange: (value: string) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onVoiceSubmitAction: (transcript: string) => Promise<void> | void;
 };
 
 export function ChatComposer({
@@ -14,6 +17,7 @@ export function ChatComposer({
   isConvexConfigured,
   onChange,
   onSubmit,
+  onVoiceSubmitAction,
 }: ChatComposerProps) {
   return (
     <form className="flex flex-col gap-3" onSubmit={onSubmit}>
@@ -34,9 +38,12 @@ export function ChatComposer({
         />
       </label>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-sm opacity-70">
-          Browserbase + Stagehand integration arrives in the next iteration.
-        </span>
+        <div className="flex flex-col gap-2 text-sm opacity-80 sm:flex-row sm:items-center">
+          <VoiceInputButton
+            disabled={isSending || !isConvexConfigured}
+            onTranscriptionAction={onVoiceSubmitAction}
+          />
+        </div>
         <button
           className="btn btn-primary"
           type="submit"
