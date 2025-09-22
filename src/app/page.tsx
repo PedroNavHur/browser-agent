@@ -43,7 +43,7 @@ export default function LandingPage() {
         </section>
 
         <section className="grid min-h-screen items-start gap-12 lg:grid-cols-2">
-          <article className="card bg-base-100 shadow-xl lg:rounded-3xl">
+          <article className="card bg-base-100 shadow-sm lg:rounded-3xl">
             <div className="card-body gap-5 text-left">
               <h2 className="card-title text-2xl">The Problem</h2>
               <p className="text-base leading-relaxed text-base-content/80">
@@ -56,7 +56,7 @@ export default function LandingPage() {
             </div>
           </article>
 
-          <article className="card bg-base-100 shadow-xl lg:rounded-3xl">
+          <article className="card bg-base-100 shadow-sm lg:rounded-3xl">
             <div className="card-body gap-5 text-left">
               <h2 className="card-title text-2xl">Our Solution</h2>
               <p className="text-base leading-relaxed text-base-content/80">

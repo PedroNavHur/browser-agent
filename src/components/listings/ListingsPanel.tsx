@@ -22,10 +22,10 @@ type FavoriteListing = ListingBase & {
 };
 
 type ListingsPanelProps = {
-  onFavorited?: (listingId: Id<"listings">) => void;
+  onFavoritedAction?: (listingId: Id<"listings">) => void;
 };
 
-export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
+export function ListingsPanel({ onFavoritedAction }: ListingsPanelProps) {
   const listings = (useQuery(api.listings.listListings, {}) ??
     []) as LiveListing[];
   const favorites = (useQuery(api.listings.listFavorites, {}) ??
@@ -36,7 +36,7 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
 
   const handleFavorite = async (listingId: Id<"listings">) => {
     await favoriteListing({ listingId });
-    onFavorited?.(listingId);
+    onFavoritedAction?.(listingId);
   };
 
   const handleRemoveListing = async (listingId: Id<"listings">) => {
@@ -48,16 +48,19 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
   };
 
   return (
-    <section className="card h-[26rem] bg-base-100 shadow-xl lg:rounded-3xl">
+    <section className="card h-[26rem] bg-base-100 shadow-sm lg:rounded-3xl">
       <div className="card-body flex h-full flex-col gap-2 overflow-hidden">
-        <header className="flex items-center justify-between">
+        <header className="flex items-start justify-between">
           <div>
             <h2 className="card-title">Live listings</h2>
             <p className="text-sm opacity-70">
-              Listings captured via Buscalo tools. Favorite the ones you like.
+              Listings captured via Buscalo tools.
             </p>
+            <p className="text-sm opacity-70">Favorite the ones you like.</p>
           </div>
-          <span className="badge badge-outline">{listings.length} active</span>
+          <span className="badge badge-sm badge-neutral self-start">
+            {listings.length}
+          </span>
         </header>
 
         <div className="flex-1 space-y-4 overflow-y-auto pr-1 scrollbar-thin rounded-box border border-base-300/70 bg-base-200/60 p-3">
@@ -139,7 +142,7 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
         ) : null}
         <div className="mt-2 flex items-center gap-2">
           <button
-            className="btn btn-sm btn-primary"
+            className="btn btn-xs btn-primary"
             type="button"
             onClick={() => onFavorite(listing.id)}
           >
@@ -147,7 +150,7 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
             Favorite
           </button>
           <button
-            className="btn btn-sm btn-ghost"
+            className="btn btn-xs btn-ghost"
             type="button"
             onClick={() => onRemove(listing.id)}
           >
@@ -170,7 +173,7 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
     <footer className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Favorites</h3>
-        <span className="badge badge-outline">{favorites.length}</span>
+        <span className="badge badge-sm badge-neutral">{favorites.length}</span>
       </div>
       <div className="space-y-3">
         {favorites.length === 0 ? (

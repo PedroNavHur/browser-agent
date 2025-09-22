@@ -23,7 +23,7 @@ export function AgentActivityLog({
 
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container) {
+    if (!container || items.length === 0) {
       return;
     }
 
@@ -36,16 +36,16 @@ export function AgentActivityLog({
       ? "Completed"
       : "Idle";
 
-  const statusTone = isRunning ? "badge-primary" : "badge-outline";
+  const statusTone = isRunning ? "badge-primary" : "badge-neutral";
 
   return (
-    <section className="card bg-base-100 shadow-xl lg:rounded-3xl">
+    <section className="card bg-base-100 shadow-sm lg:rounded-3xl">
       <div className="card-body gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="card-title text-sm font-semibold uppercase tracking-wide lg:rounded-3xl">
+          <h2 className="card-title text-sm font-semibold uppercase tracking-wide">
             Agent Activity
           </h2>
-          <span className={`badge ${statusTone}`}>{statusLabel}</span>
+          <span className={`badge badge-sm ${statusTone}`}>{statusLabel}</span>
         </div>
 
         <div

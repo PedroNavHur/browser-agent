@@ -116,11 +116,11 @@ export function ChatWindow() {
 
   return (
     <main className="min-h-screen w-full bg-base-200 text-base-content">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-2 px-6 py-14 lg:px-10">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 px-6 pb-14 pt-0 lg:px-10">
         <ChatHeader isConvexConfigured={isConvexConfigured} />
 
-        <div className="grid flex-1 gap-8 lg:grid-cols-[1.7fr_1fr]">
-          <section className="card flex h-full flex-col bg-base-100 shadow-xl lg:rounded-3xl">
+        <div className="grid flex-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
+          <section className="card flex h-full flex-col bg-base-100 shadow-sm lg:rounded-3xl">
             <div className="card-body flex h-full flex-col gap-8">
               <ChatMessageList messages={messages} />
 
@@ -142,7 +142,7 @@ export function ChatWindow() {
                 <ListingsPanel />
               </>
             ) : (
-              <section className="card h-full bg-base-100 shadow-xl">
+              <section className="card h-full bg-base-100 shadow-sm">
                 <div className="card-body flex h-full flex-col items-center justify-center gap-3 text-center opacity-70">
                   <p>
                     Add your Convex deployment URL to enable live listing
