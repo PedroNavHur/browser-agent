@@ -96,13 +96,14 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
   return (
     <article className="flex gap-3 rounded-box border border-base-300 bg-base-200/60 p-3">
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
-        {listing.imageUrl ? (
-          <Image
-            src={listing.imageUrl}
-            alt={listing.title}
-            fill
-            className="object-cover"
-          />
+          {listing.imageUrl ? (
+            <Image
+              src={listing.imageUrl}
+              alt={listing.title}
+              fill
+              unoptimized
+              className="object-cover"
+            />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-base-200 text-xs text-base-content/60">
             No image
@@ -188,6 +189,7 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
                     src={favorite.imageUrl}
                     alt={favorite.title}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 ) : (
