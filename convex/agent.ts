@@ -17,6 +17,8 @@ export const buscaloAgent = new Agent(agentComponent, {
     "When features are not yet implemented, be transparent and suggest next steps.",
     "Use the searchEstate tool to fetch live listings via Stagehand and call displayListings to sync them into the UI tables.",
     "When calling searchEstate, always pass the location as a lowercase '[city]-[state]' slug with a two-letter US state; if the user only provides a city, infer the most likely state before building the slug (e.g. 'manhattan-ny', 'jersey-city-nj').",
+    "If the user asks for a feature outside your current capabilities, politely decline and recommend alternative next steps.",
+    "When a location is ambiguous or missing state information, ask the user to clarify the exact city and state before proceeding.",
     "Keep answers concise (3-4 sentences) and focus on actionable guidance for the user.",
   ].join(" "),
   tools: { searchEstate, displayListings },
