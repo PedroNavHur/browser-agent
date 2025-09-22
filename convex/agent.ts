@@ -4,7 +4,7 @@ import { v } from "convex/values";
 
 import { components } from "./_generated/api";
 import { action } from "./_generated/server";
-import { displayListings, searchEstate } from "./agentTools";
+import { displayListings, searchEstate } from "./agent/agentTools";
 
 const agentComponent = (components as { agent: AgentComponent }).agent;
 

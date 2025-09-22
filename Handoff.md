@@ -34,9 +34,7 @@ areas of interest:
 
 ## 5. Notable Files After Restructure
 - `convex/agent/index.ts` – main agent definition & `sendMessage` action.
-- `convex/agent/tools.ts`, `agent/utils.ts`, `agent/types.ts`, `agent/logging.ts` – split to
-  modularize the agent helpers.
-- Root re-export proxies: `convex/agent.ts`, `agentTools.ts`, etc. to preserve existing imports.
+- `convex/agent/agentTools.ts`, `convex/agent/agentUtils.ts`, `convex/agent/agentTypes.ts`, `convex/agent/logging.ts` – split to modularize the agent helpers.
 
 If the refactor is undesirable, revert the above files and delete `convex/agent/` to return to the
 previous layout. Ensure `_generated/api.d.ts` is regenerated to avoid stale references.

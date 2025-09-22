@@ -8,10 +8,10 @@
  * @module
  */
 
+import type * as agent_agentTools from "../agent/agentTools.js";
+import type * as agent_agentTypes from "../agent/agentTypes.js";
+import type * as agent_agentUtils from "../agent/agentUtils.js";
 import type * as agent from "../agent.js";
-import type * as agentTools from "../agentTools.js";
-import type * as agentTypes from "../agentTypes.js";
-import type * as agentUtils from "../agentUtils.js";
 import type * as listings from "../listings.js";
 import type * as logs from "../logs.js";
 import type * as sessionPool from "../sessionPool.js";
@@ -41,10 +41,10 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "agent/agentTools": typeof agent_agentTools;
+  "agent/agentTypes": typeof agent_agentTypes;
+  "agent/agentUtils": typeof agent_agentUtils;
   agent: typeof agent;
-  agentTools: typeof agentTools;
-  agentTypes: typeof agentTypes;
-  agentUtils: typeof agentUtils;
   listings: typeof listings;
   logs: typeof logs;
   sessionPool: typeof sessionPool;

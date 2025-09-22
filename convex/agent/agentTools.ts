@@ -1,7 +1,7 @@
 import { createTool } from "@convex-dev/agent";
 import { z } from "zod";
 
-import { api } from "./_generated/api";
+import { api } from "../_generated/api";
 import type {
   SearchEstateResult,
   StagehandListing,
