@@ -1,10 +1,10 @@
 "use client";
 
+import { api } from "@/lib/convexApi";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { HeartPlus, Phone, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { api } from "@/lib/convexApi";
 
 type ListingBase = {
   title: string;
@@ -26,8 +26,10 @@ type ListingsPanelProps = {
 };
 
 export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
-  const listings = (useQuery(api.listings.listListings, {}) ?? []) as LiveListing[];
-  const favorites = (useQuery(api.listings.listFavorites, {}) ?? []) as FavoriteListing[];
+  const listings = (useQuery(api.listings.listListings, {}) ??
+    []) as LiveListing[];
+  const favorites = (useQuery(api.listings.listFavorites, {}) ??
+    []) as FavoriteListing[];
   const favoriteListing = useMutation(api.listings.favoriteListing);
   const removeListing = useMutation(api.listings.removeListing);
   const removeFavorite = useMutation(api.listings.removeFavorite);
@@ -46,8 +48,8 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
   };
 
   return (
-    <section className="card h-full bg-base-100 shadow-xl">
-      <div className="card-body flex h-full flex-col gap-6">
+    <section className="card h-[26rem] bg-base-100 shadow-xl lg:rounded-3xl">
+      <div className="card-body flex h-full flex-col gap-2 overflow-hidden">
         <header className="flex items-center justify-between">
           <div>
             <h2 className="card-title">Live listings</h2>
@@ -58,13 +60,13 @@ export function ListingsPanel({ onFavorited }: ListingsPanelProps) {
           <span className="badge badge-outline">{listings.length} active</span>
         </header>
 
-        <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+        <div className="flex-1 space-y-4 overflow-y-auto pr-1 scrollbar-thin rounded-box border border-base-300/70 bg-base-200/60 p-3">
           {listings.length === 0 ? (
             <div className="rounded-box border border-dashed border-base-300 p-4 text-sm opacity-70">
               Ask Buscalo to pull some listings and they'll appear here.
             </div>
           ) : (
-            listings.map((listing) => (
+            listings.map(listing => (
               <ListingCard
                 key={listing.id}
                 listing={listing}
@@ -96,14 +98,14 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
   return (
     <article className="flex gap-3 rounded-box border border-base-300 bg-base-200/60 p-3">
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
-          {listing.imageUrl ? (
-            <Image
-              src={listing.imageUrl}
-              alt={listing.title}
-              fill
-              unoptimized
-              className="object-cover"
-            />
+        {listing.imageUrl ? (
+          <Image
+            src={listing.imageUrl}
+            alt={listing.title}
+            fill
+            unoptimized
+            className="object-cover"
+          />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-base-200 text-xs text-base-content/60">
             No image
@@ -112,34 +114,34 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
       </div>
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-center justify-between gap-3">
-        {detailUrl ? (
-          <a
-            href={detailUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold hover:underline"
-          >
-            {listing.title}
-          </a>
-        ) : (
-          <span className="font-semibold">{listing.title}</span>
-        )}
-        <span className="font-semibold text-primary">
-          ${listing.price.toLocaleString("en-US")}
-        </span>
-      </div>
-      <p className="text-sm opacity-80">{listing.address}</p>
-          {listing.phone ? (
-            <p className="flex items-center gap-1 text-xs opacity-60">
-              <Phone className="h-3 w-3" aria-hidden />
-              <span>{listing.phone}</span>
-            </p>
-      ) : null}
-      <div className="mt-2 flex items-center gap-2">
-        <button
-          className="btn btn-sm btn-primary"
-          type="button"
-          onClick={() => onFavorite(listing.id)}
+          {detailUrl ? (
+            <a
+              href={detailUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold hover:underline"
+            >
+              {listing.title}
+            </a>
+          ) : (
+            <span className="font-semibold">{listing.title}</span>
+          )}
+          <span className="font-semibold text-primary">
+            ${listing.price.toLocaleString("en-US")}
+          </span>
+        </div>
+        <p className="text-sm opacity-80">{listing.address}</p>
+        {listing.phone ? (
+          <p className="flex items-center gap-1 text-xs opacity-60">
+            <Phone className="h-3 w-3" aria-hidden />
+            <span>{listing.phone}</span>
+          </p>
+        ) : null}
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            className="btn btn-sm btn-primary"
+            type="button"
+            onClick={() => onFavorite(listing.id)}
           >
             <HeartPlus className="h-4 w-4" aria-hidden />
             Favorite
@@ -176,62 +178,62 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
             Favorited listings will move here for quick reference.
           </p>
         ) : (
-          favorites.map((favorite) => {
+          favorites.map(favorite => {
             const favoriteUrl = buildApartmentsLink(favorite.address);
             return (
               <article
                 key={favorite.id}
                 className="flex gap-3 rounded-box border border-base-200 bg-base-200/40 p-3"
               >
-              <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
-                {favorite.imageUrl ? (
-                  <Image
-                    src={favorite.imageUrl}
-                    alt={favorite.title}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-base-200 text-xs text-base-content/60">
-                    No image
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-1 flex-col gap-1">
-                {favoriteUrl ? (
-                  <a
-                    href={favoriteUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium hover:underline"
-                  >
-                    {favorite.title}
-                  </a>
-                ) : (
-                  <span className="font-medium">{favorite.title}</span>
-                )}
-                <span className="text-sm opacity-80">{favorite.address}</span>
-                {favorite.phone ? (
-                  <span className="flex items-center gap-1 text-xs opacity-60">
-                    <Phone className="h-3 w-3" aria-hidden />
-                    {favorite.phone}
+                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
+                  {favorite.imageUrl ? (
+                    <Image
+                      src={favorite.imageUrl}
+                      alt={favorite.title}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-base-200 text-xs text-base-content/60">
+                      No image
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-1 flex-col gap-1">
+                  {favoriteUrl ? (
+                    <a
+                      href={favoriteUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium hover:underline"
+                    >
+                      {favorite.title}
+                    </a>
+                  ) : (
+                    <span className="font-medium">{favorite.title}</span>
+                  )}
+                  <span className="text-sm opacity-80">{favorite.address}</span>
+                  {favorite.phone ? (
+                    <span className="flex items-center gap-1 text-xs opacity-60">
+                      <Phone className="h-3 w-3" aria-hidden />
+                      {favorite.phone}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="flex flex-col justify-between text-right">
+                  <span className="font-semibold text-primary">
+                    ${favorite.price.toLocaleString("en-US")}
                   </span>
-                ) : null}
-              </div>
-              <div className="flex flex-col justify-between text-right">
-                <span className="font-semibold text-primary">
-                  ${favorite.price.toLocaleString("en-US")}
-                </span>
-                <button
-                  className="btn btn-xs btn-ghost"
-                  type="button"
-                  onClick={() => onRemoveFavorite(favorite.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                  Remove
-                </button>
-              </div>
+                  <button
+                    className="btn btn-xs btn-ghost"
+                    type="button"
+                    onClick={() => onRemoveFavorite(favorite.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                    Remove
+                  </button>
+                </div>
               </article>
             );
           })

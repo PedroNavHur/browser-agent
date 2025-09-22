@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-import { useQuery } from "convex/react";
 import { api } from "@/lib/convexApi";
+import { useQuery } from "convex/react";
+import { useEffect, useMemo, useRef } from "react";
 
 type AgentActivityLogProps = {
   threadId?: string;
@@ -15,10 +15,20 @@ export function AgentActivityLog({
 }: AgentActivityLogProps) {
   const logs = useQuery(
     api.logs.listLogsByThread,
-    threadId ? { threadId } : "skip",
+    threadId ? { threadId } : "skip"
   );
 
   const items = useMemo(() => logs ?? [], [logs]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+  }, [items.length]);
 
   const statusLabel = isRunning
     ? "Running"
@@ -29,19 +39,22 @@ export function AgentActivityLog({
   const statusTone = isRunning ? "badge-primary" : "badge-outline";
 
   return (
-    <section className="card bg-base-100 shadow-xl">
+    <section className="card bg-base-100 shadow-xl lg:rounded-3xl">
       <div className="card-body gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="card-title text-sm font-semibold uppercase tracking-wide">
+          <h2 className="card-title text-sm font-semibold uppercase tracking-wide lg:rounded-3xl">
             Agent Activity
           </h2>
           <span className={`badge ${statusTone}`}>{statusLabel}</span>
         </div>
 
-        <div className="scrollbar-thin max-h-64 space-y-2 overflow-y-auto rounded-box border border-base-300/70 bg-base-200/60 p-3 text-sm">
+        <div
+          ref={scrollContainerRef}
+          className="scrollbar-thin max-h-64 space-y-2 overflow-y-auto rounded-box border border-base-300/70 bg-base-200/60 p-3 text-sm"
+        >
           {threadId ? (
             items.length > 0 ? (
-              items.map((log) => (
+              items.map(log => (
                 <div
                   key={log.id}
                   className="flex items-start gap-2 rounded-lg bg-base-100/80 p-2 shadow-sm"

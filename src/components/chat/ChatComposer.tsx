@@ -22,7 +22,7 @@ export function ChatComposer({
   return (
     <form className="flex flex-col gap-3" onSubmit={onSubmit}>
       <label className="form-control">
-        <div className="label">
+        <div className="label flex flex-col items-start text-left">
           <span className="label-text">What do you need the agent to do?</span>
           <span className="label-text-alt text-xs opacity-60">
             Example: "Find studios in Jersey City under $2,000 and allow pets"
@@ -32,7 +32,7 @@ export function ChatComposer({
           className="textarea textarea-bordered min-h-24"
           placeholder="Describe your real-estate mission"
           value={input}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={event => onChange(event.target.value)}
           disabled={isSending}
           required
         />

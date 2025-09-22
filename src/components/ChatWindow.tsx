@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { convexClient } from "@/app/convex-provider";
 import { api } from "@/lib/convexApi";
+import { useMemo, useState } from "react";
 import { AgentActivityLog } from "./AgentActivityLog";
 import { ChatComposer } from "./chat/ChatComposer";
 import { ChatHeader } from "./chat/ChatHeader";
@@ -60,7 +60,9 @@ export function ChatWindow() {
         return;
       }
 
-      const payload = threadId ? { text: trimmed, threadId } : { text: trimmed };
+      const payload = threadId
+        ? { text: trimmed, threadId }
+        : { text: trimmed };
       const client = convexClient;
       if (!client) {
         throw new Error("Convex client unavailable");
@@ -92,7 +94,7 @@ export function ChatWindow() {
   };
 
   const enqueueMessage = (message: ChatMessage) => {
-    setMessages((prev) => [...prev, message]);
+    setMessages(prev => [...prev, message]);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -114,7 +116,7 @@ export function ChatWindow() {
 
   return (
     <main className="min-h-screen w-full bg-base-200 text-base-content">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-10 px-6 py-14 lg:px-10">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-2 px-6 py-14 lg:px-10">
         <ChatHeader isConvexConfigured={isConvexConfigured} />
 
         <div className="grid flex-1 gap-8 lg:grid-cols-[1.7fr_1fr]">
@@ -126,7 +128,7 @@ export function ChatWindow() {
                 input={input}
                 isSending={isSending}
                 isConvexConfigured={isConvexConfigured}
-                onChange={(value) => setInput(value)}
+                onChange={value => setInput(value)}
                 onSubmit={handleSubmit}
                 onVoiceSubmitAction={handleVoiceSubmit}
               />
@@ -143,8 +145,8 @@ export function ChatWindow() {
               <section className="card h-full bg-base-100 shadow-xl">
                 <div className="card-body flex h-full flex-col items-center justify-center gap-3 text-center opacity-70">
                   <p>
-                    Add your Convex deployment URL to enable live listing storage
-                    and activity logs.
+                    Add your Convex deployment URL to enable live listing
+                    storage and activity logs.
                   </p>
                   <p className="text-sm">
                     Once configured, Buscalo will surface real-time logs and
