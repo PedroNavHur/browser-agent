@@ -32,4 +32,13 @@ export default defineSchema({
   })
     .index("by_thread_time", ["threadId", "createdAt"])
     .index("by_thread_run", ["threadId", "runId", "createdAt"]),
+
+  browserbaseSessions: defineTable({
+    sessionId: v.string(),
+    status: v.union(v.literal("available"), v.literal("in_use")),
+    createdAt: v.number(),
+    lastUsedAt: v.number(),
+  })
+    .index("by_status", ["status", "lastUsedAt"])
+    .index("by_sessionId", ["sessionId"]),
 });

@@ -39,7 +39,8 @@ export function computeResultLimit(limit?: number | null): number {
 
 export function createStagehandClient(
   env: StagehandEnv,
-  recordLog: (message: string) => void
+  recordLog: (message: string) => void,
+  sessionId?: string
 ): Stagehand {
   return new Stagehand({
     env: "BROWSERBASE",
@@ -54,6 +55,7 @@ export function createStagehandClient(
       baseURL: process.env.OPENAI_BASE_URL,
     },
     disablePino: true,
+    browserbaseSessionID: sessionId,
     logger: (logLine: LogLine) => {
       const level = typeof logLine.level === "number" ? logLine.level : 1;
       if (level > 1) return;
