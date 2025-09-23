@@ -2,10 +2,7 @@ import { createTool } from "@convex-dev/agent";
 import { z } from "zod";
 
 import { api } from "../_generated/api";
-import type {
-  SearchEstateResult,
-  StagehandListing,
-} from "./agentTypes";
+import type { SearchEstateResult, StagehandListing } from "./agentTypes";
 import {
   computeSharedTags,
   normalizeLocation,
@@ -58,12 +55,12 @@ export const searchEstate = createTool({
           limit,
           threadId: activeThreadId ?? undefined,
           runId,
-        }
+        },
       );
 
       const listings = (stagehandResult.listings ?? []).slice(
         0,
-        limit
+        limit,
       ) as StagehandListing[];
 
       console.log("searchEstate:stagehand_result", {
@@ -71,7 +68,7 @@ export const searchEstate = createTool({
         filtered: stagehandResult.filteredCount,
         rejected: stagehandResult.rejectedCount,
         returned: listings.length,
-        sample: listings.map(listing => ({
+        sample: listings.map((listing) => ({
           title: listing.title,
           price: listing.price,
           beds: listing.beds,
@@ -89,19 +86,18 @@ export const searchEstate = createTool({
       }
 
       if (listings.length > 0) {
-        const transformed = listings.map(listing =>
-          stagehandToSearchEstate(listing, sharedTags)
+        const transformed = listings.map((listing) =>
+          stagehandToSearchEstate(listing, sharedTags),
         );
 
         await ctx.runMutation(api.listings.recordListings, {
           threadId,
-          listings: transformed.map(listing => ({
+          listings: transformed.map((listing) => ({
             title: listing.title,
             address: listing.address,
             price: listing.price,
             phone: listing.phone,
             imageUrl: listing.imageUrl,
-            url: listing.url,
           })),
         });
 
@@ -153,8 +149,7 @@ export const displayListings = createTool({
           price: z.number(),
           phone: z.string().optional(),
           imageUrl: z.string().url().optional(),
-          url: z.string().url().optional(),
-        })
+        }),
       )
       .min(1)
       .describe("Listings to display in the UI"),
@@ -163,9 +158,8 @@ export const displayListings = createTool({
     const threadId = ctx.threadId ?? "public";
     await ctx.runMutation(api.listings.recordListings, {
       threadId,
-      listings: listings.map(listing => ({
+      listings: listings.map((listing) => ({
         ...listing,
-        url: listing.url ?? "",
       })),
     });
     return `Stored ${listings.length} listing${listings.length === 1 ? "" : "s"} for display.`;

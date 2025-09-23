@@ -6,8 +6,8 @@ export const getAvailableSession = query({
   handler: async (ctx, { cutoff }) => {
     const candidate = await ctx.db
       .query("browserbaseSessions")
-    .withIndex("by_status", q => q.eq("status", "available"))
-    .order("desc")
+      .withIndex("by_status", (q) => q.eq("status", "available"))
+      .order("desc")
       .first();
     if (!candidate) return null;
     const stale = candidate.lastUsedAt < cutoff;

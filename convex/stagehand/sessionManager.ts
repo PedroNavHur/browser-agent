@@ -16,7 +16,7 @@ type LogFn = (message: string) => void;
 
 export async function acquireBrowserbaseSession(
   ctx: ActionCtx,
-  log?: LogFn
+  log?: LogFn,
 ): Promise<SessionHandle> {
   const now = Date.now();
   const cutoff = now - REUSE_WINDOW_MS;
@@ -56,7 +56,7 @@ export async function releaseBrowserbaseSession(
   ctx: ActionCtx,
   handle: SessionHandle,
   sessionId: string,
-  log?: LogFn
+  log?: LogFn,
 ) {
   const now = Date.now();
   if (handle.docId) {
@@ -78,10 +78,12 @@ export async function releaseBrowserbaseSession(
 export async function discardBrowserbaseSession(
   ctx: ActionCtx,
   handle: SessionHandle,
-  log?: LogFn
+  log?: LogFn,
 ) {
   if (handle.docId) {
     await ctx.runMutation(api.sessionPool.deleteSession, { id: handle.docId });
-    log?.(`Discarded Browserbase session record ${handle.sessionId ?? "unknown"}`);
+    log?.(
+      `Discarded Browserbase session record ${handle.sessionId ?? "unknown"}`,
+    );
   }
 }

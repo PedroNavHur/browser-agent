@@ -15,7 +15,7 @@ export type RunLogger = {
 
 export function createRunLogger(
   ctx: LogCtx,
-  options: { threadId?: string | null; runId?: string | null }
+  options: { threadId?: string | null; runId?: string | null },
 ): RunLogger {
   const threadId = options.threadId ?? null;
   const runId = options.runId ?? `run-${Date.now()}`;

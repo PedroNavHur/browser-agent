@@ -7,7 +7,6 @@ const listingObject = v.object({
   price: v.number(),
   phone: v.optional(v.string()),
   imageUrl: v.optional(v.string()),
-  url: v.optional(v.string()),
 });
 
 export const recordListings = mutation({
@@ -20,15 +19,15 @@ export const recordListings = mutation({
     const now = Date.now();
 
     for (const listing of listings) {
-      const urlKey = listing.url ?? `generated:${listing.title}:${listing.price}`;
-      const existing = listing.url
-        ? await ctx.db
-            .query("listings")
-            .withIndex("by_thread_url", (q) =>
-              q.eq("threadId", threadId).eq("url", listing.url ?? ""),
-            )
-            .first()
-        : null;
+      const existing = await ctx.db
+        .query("listings")
+        .withIndex("by_thread_title_address", (q) =>
+          q
+            .eq("threadId", threadId)
+            .eq("title", listing.title)
+            .eq("address", listing.address),
+        )
+        .first();
 
       if (existing) {
         await ctx.db.patch(existing._id, {
@@ -48,7 +47,6 @@ export const recordListings = mutation({
         price: listing.price,
         phone: listing.phone,
         imageUrl: listing.imageUrl,
-        url: urlKey,
         createdAt: now,
       });
     }
@@ -67,7 +65,6 @@ export const listListings = query({
       price: v.number(),
       phone: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
-      url: v.optional(v.string()),
       createdAt: v.number(),
     }),
   ),
@@ -80,7 +77,6 @@ export const listListings = query({
       price: doc.price,
       phone: doc.phone,
       imageUrl: doc.imageUrl,
-      url: doc.url?.startsWith("generated:") ? "" : doc.url,
       createdAt: doc.createdAt,
     }));
   },
@@ -96,7 +92,6 @@ export const listFavorites = query({
       price: v.number(),
       phone: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
-      url: v.optional(v.string()),
       favoritedAt: v.number(),
     }),
   ),
@@ -109,7 +104,6 @@ export const listFavorites = query({
       price: doc.price,
       phone: doc.phone,
       imageUrl: doc.imageUrl,
-      url: doc.url?.startsWith("generated:") ? "" : doc.url,
       favoritedAt: doc.favoritedAt,
     }));
   },
@@ -128,8 +122,11 @@ export const favoriteListing = mutation({
 
     const existing = await ctx.db
       .query("favorites")
-      .withIndex("by_thread_url", (q) =>
-        q.eq("threadId", listing.threadId).eq("url", listing.url ?? ""),
+      .withIndex("by_thread_title_address", (q) =>
+        q
+          .eq("threadId", listing.threadId)
+          .eq("title", listing.title)
+          .eq("address", listing.address),
       )
       .first();
 
@@ -141,7 +138,6 @@ export const favoriteListing = mutation({
         price: listing.price,
         phone: listing.phone,
         imageUrl: listing.imageUrl,
-        url: listing.url ?? `generated:${listing.title}:${listing.price}`,
         favoritedAt: Date.now(),
       });
     }

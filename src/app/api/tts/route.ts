@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!apiKey) {
       return NextResponse.json(
         { error: "OPENAI_API_KEY is not configured." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     if (typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json(
         { error: "Request body must include non-empty 'text'." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       const errorText = await response.text();
       return NextResponse.json(
         { error: "Failed to generate speech", details: errorText },
-        { status: response.status }
+        { status: response.status },
       );
     }
 

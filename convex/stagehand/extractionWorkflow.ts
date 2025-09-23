@@ -48,7 +48,7 @@ export type ExtractionResult = {
 
 export async function performApartmentsExtraction(
   ctx: ActionCtx,
-  args: ExtractionArgs
+  args: ExtractionArgs,
 ): Promise<ExtractionResult> {
   const env = resolveStagehandEnv();
   const logger = createRunLogger(ctx, {
@@ -62,11 +62,14 @@ export async function performApartmentsExtraction(
   let lastError: unknown;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const sessionHandle = await acquireBrowserbaseSession(ctx, logger.recordLog);
+    const sessionHandle = await acquireBrowserbaseSession(
+      ctx,
+      logger.recordLog,
+    );
     const stagehand = createStagehandClient(
       env,
       logger.recordLog,
-      sessionHandle.sessionId
+      sessionHandle.sessionId,
     );
 
     try {
@@ -95,7 +98,7 @@ export async function performApartmentsExtraction(
         slugUrl,
         filterInstructions,
         resultLimit,
-        logger.recordLog
+        logger.recordLog,
       );
 
       const extracted = await page.extract({
@@ -106,8 +109,10 @@ export async function performApartmentsExtraction(
 
       const normalized = normalizeListings(extracted.listings ?? []);
 
-      if (normalized.some(listing => !listing.imageUrl)) {
-        logger.recordLog("Attempting to backfill missing image URLs from the DOM");
+      if (normalized.some((listing) => !listing.imageUrl)) {
+        logger.recordLog(
+          "Attempting to backfill missing image URLs from the DOM",
+        );
         await backfillImages(page, normalized, logger.recordLog);
       }
 
@@ -117,16 +122,21 @@ export async function performApartmentsExtraction(
         }
       }
 
-      const { filtered, rejected } = filterListingsByConstraints(normalized, args);
+      const { filtered, rejected } = filterListingsByConstraints(
+        normalized,
+        args,
+      );
       if (rejected.length > 0) {
         console.log(
           "stagehand:filtered_out",
-          rejected.map(entry => ({
+          rejected.map((entry) => ({
             title: entry.listing.title,
             price: entry.listing.price,
             address: entry.listing.address,
-            reasons: entry.reasons.map(reason => `${reason.type}: ${reason.detail}`),
-          }))
+            reasons: entry.reasons.map(
+              (reason) => `${reason.type}: ${reason.detail}`,
+            ),
+          })),
         );
       }
 
@@ -135,20 +145,20 @@ export async function performApartmentsExtraction(
         "stagehand:normalized_listings",
         normalized.length,
         constrained.length,
-        constrained.map(listing => ({
+        constrained.map((listing) => ({
           title: listing.title,
           price: listing.price,
-        }))
+        })),
       );
       logger.recordLog(
-        `Normalized ${normalized.length} listings, returning ${constrained.length}`
+        `Normalized ${normalized.length} listings, returning ${constrained.length}`,
       );
 
       await releaseBrowserbaseSession(
         ctx,
         sessionHandle,
         activeSessionId,
-        logger.recordLog
+        logger.recordLog,
       );
 
       return {
@@ -166,7 +176,7 @@ export async function performApartmentsExtraction(
       const message = error instanceof Error ? error.message : String(error);
       const retrying = attempt + 1 < maxAttempts;
       logger.recordLog(
-        `Stagehand extraction error${retrying ? ", retrying with a new session" : ""}: ${message}`
+        `Stagehand extraction error${retrying ? ", retrying with a new session" : ""}: ${message}`,
       );
       await discardBrowserbaseSession(ctx, sessionHandle, logger.recordLog);
       try {

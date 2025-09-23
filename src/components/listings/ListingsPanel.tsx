@@ -12,7 +12,6 @@ type ListingBase = {
   price: number;
   phone?: string;
   imageUrl?: string;
-  url: string;
 };
 
 type LiveListing = ListingBase & { id: Id<"listings">; createdAt: number };
@@ -69,7 +68,7 @@ export function ListingsPanel({ onFavoritedAction }: ListingsPanelProps) {
               Ask Buscalo to pull some listings and they'll appear here.
             </div>
           ) : (
-            listings.map(listing => (
+            listings.map((listing) => (
               <ListingCard
                 key={listing.id}
                 listing={listing}
@@ -96,8 +95,6 @@ type ListingCardProps = {
 };
 
 function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
-  const detailUrl = buildApartmentsLink(listing.address);
-
   return (
     <article className="flex gap-3 rounded-box border border-base-300 bg-base-200/60 p-3">
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
@@ -117,18 +114,7 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
       </div>
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-center justify-between gap-3">
-          {detailUrl ? (
-            <a
-              href={detailUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold hover:underline"
-            >
-              {listing.title}
-            </a>
-          ) : (
-            <span className="font-semibold">{listing.title}</span>
-          )}
+          <span className="font-semibold">{listing.title}</span>
           <span className="font-semibold text-primary">
             ${listing.price.toLocaleString("en-US")}
           </span>
@@ -181,8 +167,7 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
             Favorited listings will move here for quick reference.
           </p>
         ) : (
-          favorites.map(favorite => {
-            const favoriteUrl = buildApartmentsLink(favorite.address);
+          favorites.map((favorite) => {
             return (
               <article
                 key={favorite.id}
@@ -204,18 +189,7 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
                   )}
                 </div>
                 <div className="flex flex-1 flex-col gap-1">
-                  {favoriteUrl ? (
-                    <a
-                      href={favoriteUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-medium hover:underline"
-                    >
-                      {favorite.title}
-                    </a>
-                  ) : (
-                    <span className="font-medium">{favorite.title}</span>
-                  )}
+                  <span className="font-medium">{favorite.title}</span>
                   <span className="text-sm opacity-80">{favorite.address}</span>
                   {favorite.phone ? (
                     <span className="flex items-center gap-1 text-xs opacity-60">
@@ -244,19 +218,4 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
       </div>
     </footer>
   );
-}
-
-function buildApartmentsLink(address?: string): string | undefined {
-  if (!address) {
-    return undefined;
-  }
-  const normalized = address
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
-  if (normalized.length === 0) {
-    return undefined;
-  }
-  return `https://www.apartments.com/${normalized}`;
 }

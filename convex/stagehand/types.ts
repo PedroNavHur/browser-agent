@@ -8,13 +8,15 @@ export const extractionSchema = z.object({
         price: z.string().min(1),
         imageUrl: z.string().url().optional(),
         address: z.string().min(1).optional(),
-      })
+      }),
     )
     .max(50)
     .default([]),
 });
 
-export type ExtractedListing = z.infer<typeof extractionSchema>["listings"][number];
+export type ExtractedListing = z.infer<
+  typeof extractionSchema
+>["listings"][number];
 
 export type NormalizedListing = {
   title: string;
@@ -22,7 +24,6 @@ export type NormalizedListing = {
   price: number;
   priceRaw: string;
   beds?: number;
-  url: string;
   imageUrl?: string;
   source: string;
 };

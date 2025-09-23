@@ -4,9 +4,9 @@ import type { ExtractedListing, NormalizedListing } from "./types";
 import { ALLOWED_IMAGE_HOSTS } from "./types";
 
 export function normalizeListings(
-  listings: ExtractedListing[]
+  listings: ExtractedListing[],
 ): NormalizedListing[] {
-  return listings.map(listing => {
+  return listings.map((listing) => {
     const imageUrl = sanitizeExternalImage(listing.imageUrl);
 
     return {
@@ -15,7 +15,6 @@ export function normalizeListings(
       price: parsePrice(listing.price),
       priceRaw: listing.price,
       beds: parseBedroomCount(`${listing.title} ${listing.address ?? ""}`),
-      url: buildApartmentsFallbackUrl(listing.address),
       imageUrl,
       source: "apartments.com",
     };
@@ -23,7 +22,7 @@ export function normalizeListings(
 }
 
 export function sanitizeExternalImage(
-  imageUrl?: string | null
+  imageUrl?: string | null,
 ): string | undefined {
   if (!imageUrl) {
     return undefined;
@@ -76,21 +75,6 @@ function sanitizeImageUrl(imageUrl?: string): string | undefined {
     return undefined;
   }
   return imageUrl;
-}
-
-function buildApartmentsFallbackUrl(address?: string): string {
-  if (!address) {
-    return "https://www.apartments.com/";
-  }
-  const normalized = address
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
-  if (normalized.length === 0) {
-    return "https://www.apartments.com/";
-  }
-  return `https://www.apartments.com/${normalized}`;
 }
 
 function parseBedroomCount(text: string): number | undefined {

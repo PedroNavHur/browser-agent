@@ -45,7 +45,7 @@ export const sendMessage = action({
     const result = await buscaloAgent.generateText(
       ctx,
       { threadId: activeThreadId },
-      { prompt: trimmed }
+      { prompt: trimmed },
     );
 
     return {

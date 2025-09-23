@@ -8,7 +8,7 @@ export function filterListingsByConstraints(
     query?: string | null;
     maxPrice?: number | null;
     bedrooms?: string | number | null;
-  }
+  },
 ): {
   filtered: NormalizedListing[];
   rejected: RejectedListing[];
@@ -27,7 +27,7 @@ export function filterListingsByConstraints(
       reasons.push({
         type: "price",
         detail: `Listing price $${listing.price.toLocaleString(
-          "en-US"
+          "en-US",
         )} exceeds max $${filters.maxPrice.toLocaleString("en-US")}`,
       });
     }
@@ -61,16 +61,16 @@ export function buildFilterInstructions({
       descriptor = `${bedrooms}-bedroom`;
     }
     steps.push(
-      'Click the "Beds/Baths" filter button above the results so the beds selector popup stays open.'
+      'Click the "Beds/Baths" filter button above the results so the beds selector popup stays open.',
     );
     steps.push(
-      `Inside the Beds/Baths popup, select the "${optionLabel}" option so only ${descriptor} listings remain, then apply or close the beds filter and wait for the list to refresh.`
+      `Inside the Beds/Baths popup, select the "${optionLabel}" option so only ${descriptor} listings remain, then apply or close the beds filter and wait for the list to refresh.`,
     );
   }
 
   if (pets === true) {
     steps.push(
-      "Enable any pets-allowed filter so the results only include pet-friendly properties and wait for the list to update."
+      "Enable any pets-allowed filter so the results only include pet-friendly properties and wait for the list to update.",
     );
   }
 

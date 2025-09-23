@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!apiKey) {
       return NextResponse.json(
         { error: "OPENAI_API_KEY is not configured." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -19,22 +19,20 @@ export async function POST(request: Request) {
     if (!(audioFile instanceof Blob)) {
       return NextResponse.json(
         { error: "Request must include audio blob under 'audio'." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const models = Array.from(
-      new Set([
-        process.env.OPENAI_STT_MODEL ?? PRIMARY_MODEL,
-        FALLBACK_MODEL,
-      ])
+      new Set([process.env.OPENAI_STT_MODEL ?? PRIMARY_MODEL, FALLBACK_MODEL]),
     );
 
     const errors: { model: string; status: number; body: string }[] = [];
 
     for (const model of models) {
       const transcriptionForm = new FormData();
-      const fileName = audioFile instanceof File ? audioFile.name : "command.webm";
+      const fileName =
+        audioFile instanceof File ? audioFile.name : "command.webm";
       transcriptionForm.append("file", audioFile, fileName);
       transcriptionForm.append("model", model);
       transcriptionForm.append("response_format", "text");
@@ -47,7 +45,7 @@ export async function POST(request: Request) {
             Authorization: `Bearer ${apiKey}`,
           },
           body: transcriptionForm,
-        }
+        },
       );
 
       if (response.ok) {
@@ -66,7 +64,7 @@ export async function POST(request: Request) {
       },
       {
         status: errors.at(-1)?.status ?? 500,
-      }
+      },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";

@@ -12,7 +12,8 @@ export type StagehandEnv = {
 export function resolveStagehandEnv(): StagehandEnv {
   const apiKey = process.env.BROWSERBASE_API_KEY;
   const projectId = process.env.BROWSERBASE_PROJECT_ID;
-  const openAiKey = process.env.OPENAI_API_KEY ?? process.env.CONVEX_OPENAI_API_KEY;
+  const openAiKey =
+    process.env.OPENAI_API_KEY ?? process.env.CONVEX_OPENAI_API_KEY;
 
   if (!apiKey) {
     throw new Error("Missing BROWSERBASE_API_KEY environment variable.");
@@ -22,7 +23,7 @@ export function resolveStagehandEnv(): StagehandEnv {
   }
   if (!openAiKey) {
     throw new Error(
-      "Missing OPENAI_API_KEY (or CONVEX_OPENAI_API_KEY) environment variable."
+      "Missing OPENAI_API_KEY (or CONVEX_OPENAI_API_KEY) environment variable.",
     );
   }
 
@@ -40,7 +41,7 @@ export function computeResultLimit(limit?: number | null): number {
 export function createStagehandClient(
   env: StagehandEnv,
   recordLog: (message: string) => void,
-  sessionId?: string
+  sessionId?: string,
 ): Stagehand {
   return new Stagehand({
     env: "BROWSERBASE",

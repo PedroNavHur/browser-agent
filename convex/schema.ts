@@ -9,9 +9,8 @@ export default defineSchema({
     price: v.number(),
     phone: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
-    url: v.string(),
     createdAt: v.number(),
-  }).index("by_thread_url", ["threadId", "url"]),
+  }).index("by_thread_title_address", ["threadId", "title", "address"]),
 
   favorites: defineTable({
     threadId: v.string(),
@@ -20,9 +19,8 @@ export default defineSchema({
     price: v.number(),
     phone: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
-    url: v.string(),
     favoritedAt: v.number(),
-  }).index("by_thread_url", ["threadId", "url"]),
+  }).index("by_thread_title_address", ["threadId", "title", "address"]),
 
   execLogs: defineTable({
     threadId: v.string(),

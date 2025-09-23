@@ -2,7 +2,6 @@ export type SearchEstateResult = {
   title: string;
   price: number;
   address: string;
-  url: string;
   summary: string;
   tags: string[];
   phone?: string;

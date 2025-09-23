@@ -34,7 +34,10 @@ export function VoiceInputButton({
         skipTranscriptionRef.current = true;
       }
 
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== "inactive"
+      ) {
         try {
           mediaRecorderRef.current.stop();
         } catch (error) {
@@ -57,11 +60,13 @@ export function VoiceInputButton({
       setIsRecording(false);
       startedAtRef.current = null;
     },
-    []
+    [],
   );
 
   useEffect(() => {
-    setIsSupported(typeof window !== "undefined" && Boolean(navigator.mediaDevices));
+    setIsSupported(
+      typeof window !== "undefined" && Boolean(navigator.mediaDevices),
+    );
 
     return () => {
       stopRecording({ force: true, skipTranscription: true });
@@ -95,32 +100,37 @@ export function VoiceInputButton({
           type Attempt = { model?: string; status?: number };
           const attemptsSummary = Array.isArray(body.attempts)
             ? (body.attempts as Attempt[])
-                .map((attempt) => `${attempt.model ?? "unknown"}: ${attempt.status ?? "?"}`)
+                .map(
+                  (attempt) =>
+                    `${attempt.model ?? "unknown"}: ${attempt.status ?? "?"}`,
+                )
                 .join(" | ")
             : undefined;
           throw new Error(
             body.error
               ? `${body.error}${attemptsSummary ? ` (${attemptsSummary})` : ""}`
-              : `Transcription failed (${status})`
+              : `Transcription failed (${status})`,
           );
         }
 
         const result = await response.json();
         console.debug("voice-input", "Transcription success", result);
-        const transcript = typeof result.text === "string" ? result.text.trim() : "";
+        const transcript =
+          typeof result.text === "string" ? result.text.trim() : "";
         if (transcript) {
           await onTranscriptionAction(transcript);
         } else {
           setError("I couldn't understand that recording.");
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to transcribe audio";
+        const message =
+          err instanceof Error ? err.message : "Failed to transcribe audio";
         setError(message);
       } finally {
         setIsProcessing(false);
       }
     },
-    [onTranscriptionAction]
+    [onTranscriptionAction],
   );
 
   const startRecording = useCallback(async () => {
@@ -166,37 +176,45 @@ export function VoiceInputButton({
           return;
         }
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: recordedMimeType });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: recordedMimeType,
+        });
         audioChunksRef.current = [];
         await transcribeAudio(audioBlob);
       };
 
       recorder.start();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to access microphone";
+      const message =
+        err instanceof Error ? err.message : "Unable to access microphone";
       setError(message);
       setIsRecording(false);
       stopRecording({ force: true, skipTranscription: true });
     }
   }, [isProcessing, isRecording, stopRecording, transcribeAudio]);
 
-  const finishRecording = useCallback((options?: { minimumDurationMs?: number }) => {
-    if (!isRecording) {
-      return;
-    }
+  const finishRecording = useCallback(
+    (options?: { minimumDurationMs?: number }) => {
+      if (!isRecording) {
+        return;
+      }
 
-    const startedAt = startedAtRef.current;
-    const duration = startedAt ? performance.now() - startedAt : 0;
-    const minimum = options?.minimumDurationMs ?? 600;
-    if (duration < minimum) {
-      setError("I barely heard that — try speaking a bit longer.");
-      stopRecording({ skipTranscription: true });
-      return;
-    }
+      const startedAt = startedAtRef.current;
+      const duration = startedAt ? performance.now() - startedAt : 0;
+      const minimum = options?.minimumDurationMs ?? 600;
+      if (duration < minimum) {
+        setError("I barely heard that — try speaking a bit longer.");
+        stopRecording({ skipTranscription: true });
+        return;
+      }
 
-    console.debug("voice-input", "Stopping recording", { durationMs: duration });
-    stopRecording();
-  }, [isRecording, stopRecording]);
+      console.debug("voice-input", "Stopping recording", {
+        durationMs: duration,
+      });
+      stopRecording();
+    },
+    [isRecording, stopRecording],
+  );
 
   const handleToggleRecording = async () => {
     if (!isSupported || disabled || isProcessing) {

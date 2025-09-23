@@ -8,11 +8,11 @@ import type { NormalizedListing } from "./types";
 export async function backfillImages(
   page: Stagehand["page"],
   listings: NormalizedListing[],
-  recordLog: (message: string) => void
+  recordLog: (message: string) => void,
 ) {
   const lookupTitles = listings
-    .filter(listing => !listing.imageUrl)
-    .map(listing => listing.title);
+    .filter((listing) => !listing.imageUrl)
+    .map((listing) => listing.title);
 
   if (lookupTitles.length === 0) {
     return;
@@ -23,13 +23,13 @@ export async function backfillImages(
       const results: Record<string, string | null> = {};
       const cards = Array.from(
         document.querySelectorAll(
-          '[data-test="placard"], [data-test="property-card"], article, [role="listitem"]'
-        )
+          '[data-test="placard"], [data-test="property-card"], article, [role="listitem"]',
+        ),
       ) as HTMLElement[];
       for (const title of titles) {
         const lowered = title.toLowerCase();
-        const container = cards.find(card =>
-          (card.textContent ?? "").toLowerCase().includes(lowered)
+        const container = cards.find((card) =>
+          (card.textContent ?? "").toLowerCase().includes(lowered),
         );
         if (!container) {
           results[title] = null;
@@ -62,7 +62,7 @@ export async function backfillImages(
     recordLog(
       `Image backfill failed: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }

@@ -8,15 +8,13 @@ export function computeSharedTags(args: {
   return [
     ...(pets ? ["pets_ok"] : []),
     ...(bedrooms === "studio" || bedrooms === 0 ? ["studio"] : []),
-    ...(typeof bedrooms === "number" && bedrooms > 0
-      ? [`${bedrooms}br`]
-      : []),
+    ...(typeof bedrooms === "number" && bedrooms > 0 ? [`${bedrooms}br`] : []),
   ];
 }
 
 export function stagehandToSearchEstate(
   listing: StagehandListing,
-  sharedTags: string[]
+  sharedTags: string[],
 ): SearchEstateResult {
   const priceLabel =
     listing.priceRaw || `$${listing.price.toLocaleString("en-US")}`;
@@ -42,7 +40,6 @@ export function stagehandToSearchEstate(
     title: listing.title,
     price: listing.price,
     address: location,
-    url: "",
     summary: `${listing.title} — ${priceLabel} • ${location}${
       bedLabel ? ` • ${bedLabel}` : ""
     }`,
@@ -117,6 +114,6 @@ function toTitleCase(text: string): string {
   return text
     .toLowerCase()
     .split(/\s+/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }

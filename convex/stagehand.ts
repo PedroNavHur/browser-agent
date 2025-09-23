@@ -27,10 +27,9 @@ export const runApartmentsExtraction = action({
         price: v.number(),
         priceRaw: v.string(),
         beds: v.optional(v.number()),
-        url: v.string(),
         imageUrl: v.optional(v.string()),
         source: v.string(),
-      })
+      }),
     ),
     extractedCount: v.number(),
     filteredCount: v.number(),

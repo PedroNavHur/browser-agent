@@ -32,7 +32,7 @@ export function ChatComposer({
           className="textarea textarea-bordered min-h-24"
           placeholder="Describe your real-estate mission"
           value={input}
-          onChange={event => onChange(event.target.value)}
+          onChange={(event) => onChange(event.target.value)}
           disabled={isSending}
           required
         />

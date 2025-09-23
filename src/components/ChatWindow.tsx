@@ -94,7 +94,7 @@ export function ChatWindow() {
   };
 
   const enqueueMessage = (message: ChatMessage) => {
-    setMessages(prev => [...prev, message]);
+    setMessages((prev) => [...prev, message]);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -128,7 +128,7 @@ export function ChatWindow() {
                 input={input}
                 isSending={isSending}
                 isConvexConfigured={isConvexConfigured}
-                onChange={value => setInput(value)}
+                onChange={(value) => setInput(value)}
                 onSubmit={handleSubmit}
                 onVoiceSubmitAction={handleVoiceSubmit}
               />

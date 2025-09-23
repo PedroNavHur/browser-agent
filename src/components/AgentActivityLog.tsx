@@ -15,7 +15,7 @@ export function AgentActivityLog({
 }: AgentActivityLogProps) {
   const logs = useQuery(
     api.logs.listLogsByThread,
-    threadId ? { threadId } : "skip"
+    threadId ? { threadId } : "skip",
   );
 
   const items = useMemo(() => logs ?? [], [logs]);
@@ -54,7 +54,7 @@ export function AgentActivityLog({
         >
           {threadId ? (
             items.length > 0 ? (
-              items.map(log => (
+              items.map((log) => (
                 <div
                   key={log.id}
                   className="flex items-start gap-2 rounded-lg bg-base-100/80 p-2 shadow-sm"
