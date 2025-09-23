@@ -1,3 +1,4 @@
+import HouseA from "@/components/svg/HouseA";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,7 +15,7 @@ export default function LandingPage() {
               { src: "/img/houseA.svg", alt: "House A" },
               { src: "/img/houseB.svg", alt: "House B" },
               { src: "/img/houseC.svg", alt: "House C" },
-            ].map((house) => (
+            ].map(house => (
               <Image
                 key={house.src}
                 src={house.src}
@@ -26,6 +27,7 @@ export default function LandingPage() {
               />
             ))}
           </div>
+          <HouseA />
           <h1 className="font-bold text-4xl leading-tight sm:text-5xl">
             Real rentals, real-time research, in your own words.
           </h1>
