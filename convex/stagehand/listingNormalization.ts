@@ -1,12 +1,11 @@
 "use node";
 
 import type { ExtractedListing, NormalizedListing } from "./types";
-import { ALLOWED_IMAGE_HOSTS } from "./types";
 
 export function normalizeListings(
-  listings: ExtractedListing[],
+  listings: ExtractedListing[]
 ): NormalizedListing[] {
-  return listings.map((listing) => {
+  return listings.map(listing => {
     const imageUrl = sanitizeExternalImage(listing.imageUrl);
 
     return {
@@ -22,7 +21,7 @@ export function normalizeListings(
 }
 
 export function sanitizeExternalImage(
-  imageUrl?: string | null,
+  imageUrl?: string | null
 ): string | undefined {
   if (!imageUrl) {
     return undefined;
@@ -62,18 +61,7 @@ function sanitizeImageUrl(imageUrl?: string): string | undefined {
   if (lower.includes("placeholder") || lower.includes("example.com")) {
     return undefined;
   }
-  try {
-    const hostname = new URL(imageUrl).hostname.toLowerCase();
-    if (
-      !ALLOWED_IMAGE_HOSTS.has(hostname) &&
-      !hostname.endsWith("apartments.com") &&
-      !hostname.endsWith("aptcdn.com")
-    ) {
-      return undefined;
-    }
-  } catch (_error) {
-    return undefined;
-  }
+
   return imageUrl;
 }
 
