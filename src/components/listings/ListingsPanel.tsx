@@ -1,10 +1,10 @@
 "use client";
 
-import { api } from "@/lib/convexApi";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { HeartPlus, Phone, Trash2 } from "lucide-react";
 import Image from "next/image";
+import { api } from "@/lib/convexApi";
 
 type ListingBase = {
   title: string;
@@ -62,9 +62,9 @@ export function ListingsPanel({ onFavoritedAction }: ListingsPanelProps) {
           </span>
         </header>
 
-        <div className="flex-1 space-y-4 overflow-y-auto pr-1 scrollbar-thin rounded-box border border-base-300/70 bg-base-200/60 p-3">
+        <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto rounded-box border border-base-300/70 bg-base-200/60 p-3 pr-1">
           {listings.length === 0 ? (
-            <div className="rounded-box border border-dashed border-base-300 p-4 text-sm opacity-70">
+            <div className="rounded-box border border-base-300 border-dashed p-4 text-sm opacity-70">
               Ask Buscalo to pull some listings and they'll appear here.
             </div>
           ) : (
@@ -107,7 +107,7 @@ function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
             className="object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-base-200 text-xs text-base-content/60">
+          <div className="flex h-full w-full items-center justify-center bg-base-200 text-base-content/60 text-xs">
             No image
           </div>
         )}
@@ -158,7 +158,7 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
   return (
     <footer className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Favorites</h3>
+        <h3 className="font-semibold text-lg">Favorites</h3>
         <span className="badge badge-sm badge-neutral">{favorites.length}</span>
       </div>
       <div className="space-y-3">
@@ -183,7 +183,7 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
                       className="object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-base-200 text-xs text-base-content/60">
+                    <div className="flex h-full w-full items-center justify-center bg-base-200 text-base-content/60 text-xs">
                       No image
                     </div>
                   )}

@@ -6,8 +6,8 @@ type ChatComposerProps = {
   input: string;
   isSending: boolean;
   isConvexConfigured: boolean;
-  onChange: (value: string) => void;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onChangeAction: (value: string) => void;
+  onSubmitAction: (event: React.FormEvent<HTMLFormElement>) => void;
   onVoiceSubmitAction: (transcript: string) => Promise<void> | void;
 };
 
@@ -15,12 +15,12 @@ export function ChatComposer({
   input,
   isSending,
   isConvexConfigured,
-  onChange,
-  onSubmit,
+  onChangeAction,
+  onSubmitAction,
   onVoiceSubmitAction,
 }: ChatComposerProps) {
   return (
-    <form className="flex flex-col gap-3" onSubmit={onSubmit}>
+    <form className="flex flex-col gap-3" onSubmit={onSubmitAction}>
       <label className="form-control">
         <div className="label flex flex-col items-start text-left">
           <span className="label-text">What do you need the agent to do?</span>
@@ -32,7 +32,7 @@ export function ChatComposer({
           className="textarea textarea-bordered min-h-24"
           placeholder="Describe your real-estate mission"
           value={input}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => onChangeAction(event.target.value)}
           disabled={isSending}
           required
         />

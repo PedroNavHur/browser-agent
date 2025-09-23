@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { Loader2, Square, Volume2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type AgentSpeechButtonProps = {
   text: string;
@@ -109,7 +109,7 @@ export function AgentSpeechButton({ text }: AgentSpeechButtonProps) {
         )}
         <span>{label}</span>
       </button>
-      {error ? <span className="text-xs text-error">{error}</span> : null}
+      {error ? <span className="text-error text-xs">{error}</span> : null}
     </div>
   );
 }

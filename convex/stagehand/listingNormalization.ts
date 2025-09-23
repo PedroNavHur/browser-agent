@@ -3,9 +3,9 @@
 import type { ExtractedListing, NormalizedListing } from "./types";
 
 export function normalizeListings(
-  listings: ExtractedListing[]
+  listings: ExtractedListing[],
 ): NormalizedListing[] {
-  return listings.map(listing => {
+  return listings.map((listing) => {
     const imageUrl = sanitizeExternalImage(listing.imageUrl);
 
     return {
@@ -21,7 +21,7 @@ export function normalizeListings(
 }
 
 export function sanitizeExternalImage(
-  imageUrl?: string | null
+  imageUrl?: string | null,
 ): string | undefined {
   if (!imageUrl) {
     return undefined;

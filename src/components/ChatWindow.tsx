@@ -1,8 +1,8 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { convexClient } from "@/app/convex-provider";
 import { api } from "@/lib/convexApi";
-import { useMemo, useState } from "react";
 import { AgentActivityLog } from "./AgentActivityLog";
 import { ChatComposer } from "./chat/ChatComposer";
 import { ChatHeader } from "./chat/ChatHeader";
@@ -116,34 +116,36 @@ export function ChatWindow() {
 
   return (
     <main className="min-h-screen w-full bg-base-200 text-base-content">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 px-6 pb-14 pt-0 lg:px-10">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 px-6 pt-0 pb-14 lg:px-10">
         <ChatHeader isConvexConfigured={isConvexConfigured} />
 
-        <div className="grid flex-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
-          <section className="card flex h-full flex-col bg-base-100 shadow-sm lg:rounded-3xl">
+        <div className="flex flex-col gap-4 md:flex-row">
+          <section className="card flex h-full flex-1 flex-col bg-base-100 shadow-sm lg:rounded-3xl">
             <div className="card-body flex h-full flex-col gap-8">
-              <ChatMessageList messages={messages} />
+              <div className="flex-1">
+                <ChatMessageList messages={messages} />
+              </div>
 
               <ChatComposer
                 input={input}
                 isSending={isSending}
                 isConvexConfigured={isConvexConfigured}
-                onChange={(value) => setInput(value)}
-                onSubmit={handleSubmit}
+                onChangeAction={(value) => setInput(value)}
+                onSubmitAction={handleSubmit}
                 onVoiceSubmitAction={handleVoiceSubmit}
               />
             </div>
           </section>
 
-          <div className="flex h-full flex-col gap-4">
-            {isConvexConfigured ? (
-              <>
-                <AgentActivityLog threadId={threadId} isRunning={isSending} />
-                <ListingsPanel />
-              </>
-            ) : (
-              <section className="card h-full bg-base-100 shadow-sm">
-                <div className="card-body flex h-full flex-col items-center justify-center gap-3 text-center opacity-70">
+          <section className="card flex h-full flex-[3_1_0%] flex-col bg-base-100 shadow-sm lg:rounded-3xl">
+            <div className="card-body flex h-full flex-col gap-4">
+              {isConvexConfigured ? (
+                <>
+                  <AgentActivityLog threadId={threadId} isRunning={isSending} />
+                  <ListingsPanel />
+                </>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-center opacity-70">
                   <p>
                     Add your Convex deployment URL to enable live listing
                     storage and activity logs.
@@ -153,9 +155,9 @@ export function ChatWindow() {
                     listings from your agent runs.
                   </p>
                 </div>
-              </section>
-            )}
-          </div>
+              )}
+            </div>
+          </section>
         </div>
       </div>
     </main>

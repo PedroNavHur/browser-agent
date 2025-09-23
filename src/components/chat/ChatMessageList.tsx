@@ -1,7 +1,7 @@
 "use client";
 
-import type { ChatMessage } from "./types";
 import { AgentSpeechButton } from "./AgentSpeechButton";
+import type { ChatMessage } from "./types";
 
 type ChatMessageListProps = {
   messages: ChatMessage[];

@@ -6,7 +6,7 @@ export default function LandingPage() {
     <main className="min-h-screen w-full bg-base-200 text-base-content">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-20 px-6 py-20 lg:px-10">
         <section className="flex min-h-screen w-full flex-col items-center justify-center gap-8 text-center">
-          <p className="text-sm uppercase tracking-widest text-primary/80">
+          <p className="text-primary/80 text-sm uppercase tracking-widest">
             Talk With Buscalo
           </p>
           <div className="flex w-full max-w-4xl items-end justify-center gap-6">
@@ -26,7 +26,7 @@ export default function LandingPage() {
               />
             ))}
           </div>
-          <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
+          <h1 className="font-bold text-4xl leading-tight sm:text-5xl">
             Real rentals, real-time research, in your own words.
           </h1>
           <p className="mx-auto max-w-2xl text-lg opacity-80">
@@ -46,7 +46,7 @@ export default function LandingPage() {
           <article className="card bg-base-100 shadow-sm lg:rounded-3xl">
             <div className="card-body gap-5 text-left">
               <h2 className="card-title text-2xl">The Problem</h2>
-              <p className="text-base leading-relaxed text-base-content/80">
+              <p className="text-base text-base-content/80 leading-relaxed">
                 Everybody knows how hard it is to find a good, affordable
                 apartment today. Marketplace sites are noisy, stale, and feel
                 detached from the actual streets. What if you could brief an
@@ -59,7 +59,7 @@ export default function LandingPage() {
           <article className="card bg-base-100 shadow-sm lg:rounded-3xl">
             <div className="card-body gap-5 text-left">
               <h2 className="card-title text-2xl">Our Solution</h2>
-              <p className="text-base leading-relaxed text-base-content/80">
+              <p className="text-base text-base-content/80 leading-relaxed">
                 Buscalo rides on Browserbase + Stagehand to browse listing sites
                 like a human does: open filters, scroll the map, capture
                 screenshots, and export structured data. Every session searches

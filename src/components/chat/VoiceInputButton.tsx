@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Mic, MicOff } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type VoiceInputButtonProps = {
   disabled?: boolean;

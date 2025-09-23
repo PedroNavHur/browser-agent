@@ -1,8 +1,8 @@
 "use client";
 
-import { api } from "@/lib/convexApi";
 import { useQuery } from "convex/react";
 import { useEffect, useMemo, useRef } from "react";
+import { api } from "@/lib/convexApi";
 
 type AgentActivityLogProps = {
   threadId?: string;
@@ -42,7 +42,7 @@ export function AgentActivityLog({
     <section className="card bg-base-100 shadow-sm lg:rounded-3xl">
       <div className="card-body gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="card-title text-sm font-semibold uppercase tracking-wide">
+          <h2 className="card-title font-semibold text-sm uppercase tracking-wide">
             Agent Activity
           </h2>
           <span className={`badge badge-sm ${statusTone}`}>{statusLabel}</span>
