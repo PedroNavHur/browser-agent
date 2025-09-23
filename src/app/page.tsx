@@ -1,6 +1,6 @@
-import HouseA from "@/components/svg/HouseA";
 import Image from "next/image";
 import Link from "next/link";
+import HouseA from "@/components/svg/HouseA";
 
 export default function LandingPage() {
   return (
@@ -15,7 +15,7 @@ export default function LandingPage() {
               { src: "/img/houseA.svg", alt: "House A" },
               { src: "/img/houseB.svg", alt: "House B" },
               { src: "/img/houseC.svg", alt: "House C" },
-            ].map(house => (
+            ].map((house) => (
               <Image
                 key={house.src}
                 src={house.src}
