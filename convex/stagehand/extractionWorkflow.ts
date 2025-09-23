@@ -56,7 +56,8 @@ export async function performApartmentsExtraction(
     runId: args.runId ?? undefined,
   });
   const resultLimit = computeResultLimit(args.limit);
-  const filterInstructions = buildFilterInstructions(args);
+  const { bedrooms, pets } = args;
+  const filterInstructions = buildFilterInstructions({ bedrooms, pets });
   const extractionInstruction = buildExtractionInstruction(resultLimit);
   const maxAttempts = 2;
   let lastError: unknown;

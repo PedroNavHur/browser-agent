@@ -43,11 +43,9 @@ export function filterListingsByConstraints(
 }
 
 export function buildFilterInstructions({
-  maxPrice,
   bedrooms,
   pets,
 }: {
-  maxPrice?: number | null;
   bedrooms?: string | number | null;
   pets?: boolean | null;
 }): string[] {

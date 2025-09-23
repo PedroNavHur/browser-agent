@@ -61,7 +61,9 @@ export function AgentSpeechButton({ text }: AgentSpeechButtonProps) {
   const handleClick = async () => {
     if (isPlaying) {
       audioRef.current?.pause();
-      audioRef.current && (audioRef.current.currentTime = 0);
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+      }
       setIsPlaying(false);
       return;
     }
