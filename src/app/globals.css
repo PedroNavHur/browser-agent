@@ -48,3 +48,86 @@
 body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+@keyframes houseA-cycle {
+  0% {
+    --wall: #b26471;
+    --floor: #9e4c5c;
+    --roof: #562949;
+    --accent: #eaadad;
+    --white: #ffffff;
+    --shadow: #875c67;
+  }
+  8%,
+  16%,
+  50% {
+    --wall: #647eb2;
+    --floor: #4c6a9e;
+    --roof: #3b2956;
+    --accent: #adb7ea;
+    --white: #ffffff;
+    --shadow: #55647c;
+  }
+  58%,
+  100% {
+    --wall: #b26471;
+    --floor: #9e4c5c;
+    --roof: #562949;
+    --accent: #eaadad;
+    --white: #ffffff;
+    --shadow: #875c67;
+  }
+}
+
+@keyframes houseB-cycle {
+  0%,
+  16% {
+    --wall: #b3abd8;
+    --roof: #403166;
+    --accent: #d1caea;
+    --white: #ffffff;
+    --shadow: #685996;
+  }
+  25%,
+  33%,
+  66% {
+    --wall: #abd8cf;
+    --roof: #326660;
+    --accent: #caeae5;
+    --white: #ffffff;
+    --shadow: #59968d;
+  }
+  75%,
+  100% {
+    --wall: #b3abd8;
+    --roof: #403166;
+    --accent: #d1caea;
+    --white: #ffffff;
+    --shadow: #685996;
+  }
+}
+
+@keyframes houseC-cycle {
+  0%,
+  33% {
+    --wall: #e5b148;
+    --roof: #592833;
+    --accent: #d69122;
+    --white: #ffffff;
+  }
+  41%,
+  50%,
+  83% {
+    --wall: #bdd2e5;
+    --roof: #592833;
+    --accent: #a8c3d6;
+    --white: #ffffff;
+  }
+  91%,
+  100% {
+    --wall: #e5b148;
+    --roof: #592833;
+    --accent: #d69122;
+    --white: #ffffff;
+  }
+}

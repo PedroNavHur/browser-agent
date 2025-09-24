@@ -1,6 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import HouseA from "@/components/svg/HouseA";
+import HouseB from "@/components/svg/HouseB";
+import HouseC from "@/components/svg/HouseC";
 
 export default function LandingPage() {
   return (
@@ -11,23 +12,17 @@ export default function LandingPage() {
             Talk With Buscalo
           </p>
           <div className="flex w-full max-w-4xl items-end justify-center gap-6">
-            {[
-              { src: "/img/houseA.svg", alt: "House A" },
-              { src: "/img/houseB.svg", alt: "House B" },
-              { src: "/img/houseC.svg", alt: "House C" },
-            ].map((house) => (
-              <Image
-                key={house.src}
-                src={house.src}
-                alt={house.alt}
-                width={360}
-                height={360}
-                priority
-                className="h-auto w-full max-w-[260px]"
-              />
-            ))}
+            <div className="flex justify-center [animation:houseA-cycle_12s_linear_infinite]">
+              <HouseA />
+            </div>
+            <div className="flex justify-center [animation:houseB-cycle_12s_linear_infinite]">
+              <HouseB />
+            </div>
+            <div className="flex justify-center [animation:houseC-cycle_12s_linear_infinite]">
+              <HouseC />
+            </div>
           </div>
-          <HouseA />
+
           <h1 className="font-bold text-4xl leading-tight sm:text-5xl">
             Real rentals, real-time research, in your own words.
           </h1>

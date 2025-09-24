@@ -17,11 +17,21 @@
       "format_on_save": "on"
     },
     "TypeScript": {
-      "language_servers": ["biome", "vtsls", "tailwindcss-language-server"],
+      "language_servers": [
+        "biome",
+        "vtsls",
+        "tailwindcss-language-server",
+        "color-lsp"
+      ],
       "format_on_save": "on"
     },
     "TSX": {
-      "language_servers": ["biome", "vtsls", "tailwindcss-language-server"],
+      "language_servers": [
+        "biome",
+        "vtsls",
+        "tailwindcss-language-server",
+        "color-lsp"
+      ],
       "format_on_save": "on"
     },
     "HTML": {
@@ -32,8 +42,9 @@
       "format_on_save": "on"
     },
     "CSS": {
-      "language_servers": ["biome"],
+      "language_servers": ["biome", "color-lsp"],
       "format_on_save": "on"
     }
-  }
+  },
+  "lsp_document_colors": "background"
 }
