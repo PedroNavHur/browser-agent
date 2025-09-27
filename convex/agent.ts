@@ -25,6 +25,30 @@ export const buscaloAgent = new Agent(agentComponent, {
   maxSteps: 4,
 });
 
+export const ensureThread = action({
+  args: {
+    threadId: v.optional(v.string()),
+  },
+  returns: v.object({
+    threadId: v.string(),
+    created: v.boolean(),
+  }),
+  handler: async (ctx, { threadId }) => {
+    if (threadId) {
+      return {
+        threadId,
+        created: false,
+      };
+    }
+
+    const newThreadId = (await createThread(ctx, agentComponent)) as string;
+    return {
+      threadId: newThreadId,
+      created: true,
+    };
+  },
+});
+
 export const sendMessage = action({
   args: {
     text: v.string(),
