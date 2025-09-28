@@ -22,9 +22,13 @@ type FavoriteListing = ListingBase & {
 
 type ListingsPanelProps = {
   onFavoritedAction?: (listingId: Id<"listings">) => void;
+  className?: string;
 };
 
-export function ListingsPanel({ onFavoritedAction }: ListingsPanelProps) {
+export function ListingsPanel({
+  onFavoritedAction,
+  className,
+}: ListingsPanelProps) {
   const listings = (useQuery(api.listings.listListings, {}) ??
     []) as LiveListing[];
   const favorites = (useQuery(api.listings.listFavorites, {}) ??
@@ -46,12 +50,28 @@ export function ListingsPanel({ onFavoritedAction }: ListingsPanelProps) {
     await removeFavorite({ favoriteId });
   };
 
+  const panelClasses = [
+    "flex",
+    "h-full",
+    "min-h-0",
+    "flex-1",
+    "flex-col",
+    "w-full",
+    "overflow-hidden",
+    "bg-base-100",
+    "shadow-sm",
+    "lg:rounded-3xl",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <section className="card h-[26rem] bg-base-100 shadow-sm lg:rounded-3xl">
-      <div className="card-body flex h-full flex-col gap-2 overflow-hidden">
-        <header className="flex items-start justify-between">
-          <div>
-            <h2 className="card-title">Live listings</h2>
+    <section className={panelClasses}>
+      <div className="flex h-full min-h-0 flex-1 flex-col">
+        <header className="flex flex-shrink-0 items-start justify-between gap-3 p-6 pb-4">
+          <div className="space-y-1">
+            <h2 className="font-semibold text-xl">Live listings</h2>
             <p className="text-sm opacity-70">
               Listings captured via Buscalo tools.
             </p>
@@ -62,27 +82,31 @@ export function ListingsPanel({ onFavoritedAction }: ListingsPanelProps) {
           </span>
         </header>
 
-        <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto rounded-box border border-base-300/70 bg-base-200/60 p-3 pr-1">
-          {listings.length === 0 ? (
-            <div className="rounded-box border border-base-300 border-dashed p-4 text-sm opacity-70">
-              Ask Buscalo to pull some listings and they'll appear here.
-            </div>
-          ) : (
-            listings.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                onFavorite={handleFavorite}
-                onRemove={handleRemoveListing}
-              />
-            ))
-          )}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-4">
+          <div className="scrollbar-thin max-h-[calc(100vh-18rem)] min-h-0 flex-1 space-y-4 overflow-y-auto rounded-2xl border border-base-300/70 bg-base-200/60 p-3 pr-1">
+            {listings.length === 0 ? (
+              <div className="rounded-box border border-base-300 border-dashed p-4 text-sm opacity-70">
+                Ask Buscalo to pull some listings and they'll appear here.
+              </div>
+            ) : (
+              listings.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  onFavorite={handleFavorite}
+                  onRemove={handleRemoveListing}
+                />
+              ))
+            )}
+          </div>
         </div>
 
-        <FavoritesList
-          favorites={favorites}
-          onRemoveFavorite={handleRemoveFavorite}
-        />
+        <div className="flex-shrink-0 border-base-200 border-t bg-base-100/70 px-6 py-5">
+          <FavoritesList
+            favorites={favorites}
+            onRemoveFavorite={handleRemoveFavorite}
+          />
+        </div>
       </div>
     </section>
   );

@@ -60,13 +60,22 @@ export function ChatWindow() {
         return;
       }
 
-      const payload = threadId
-        ? { text: trimmed, threadId }
-        : { text: trimmed };
       const client = convexClient;
       if (!client) {
         throw new Error("Convex client unavailable");
       }
+
+      let activeThreadId = threadId;
+
+      if (!activeThreadId) {
+        const ensured = await client.action(api.agent.ensureThread, {});
+        activeThreadId = ensured.threadId;
+        setThreadId(ensured.threadId);
+      }
+
+      const payload = activeThreadId
+        ? { text: trimmed, threadId: activeThreadId }
+        : { text: trimmed };
 
       const response = await client.action(api.agent.sendMessage, payload);
 
@@ -120,44 +129,48 @@ export function ChatWindow() {
         <ChatHeader isConvexConfigured={isConvexConfigured} />
 
         <div className="flex flex-col gap-4 md:flex-row">
-          <section className="card flex h-full flex-1 flex-col bg-base-100 shadow-sm lg:rounded-3xl">
-            <div className="card-body flex h-full flex-col gap-8">
-              <div className="flex-1">
+          <section className="card flex h-full max-h-[calc(100vh-8rem)] flex-[2_1_0%] flex-col overflow-hidden bg-base-100 shadow-sm lg:rounded-3xl">
+            <div className="card-body flex h-full min-h-0 flex-col gap-8 overflow-hidden">
+              <div className="flex-1 overflow-y-auto">
                 <ChatMessageList messages={messages} />
               </div>
 
-              <ChatComposer
-                input={input}
-                isSending={isSending}
-                isConvexConfigured={isConvexConfigured}
-                onChangeAction={(value) => setInput(value)}
-                onSubmitAction={handleSubmit}
-                onVoiceSubmitAction={handleVoiceSubmit}
-              />
+              <div className="flex-shrink-0">
+                <ChatComposer
+                  input={input}
+                  isSending={isSending}
+                  isConvexConfigured={isConvexConfigured}
+                  onChangeAction={(value) => setInput(value)}
+                  onSubmitAction={handleSubmit}
+                  onVoiceSubmitAction={handleVoiceSubmit}
+                />
+              </div>
             </div>
           </section>
 
-          <section className="card flex h-full flex-[3_1_0%] flex-col bg-base-100 shadow-sm lg:rounded-3xl">
-            <div className="card-body flex h-full flex-col gap-4">
-              {isConvexConfigured ? (
-                <>
+          <div className="flex h-[calc(100vh-8rem)] max-h-[calc(100vh-8rem)] min-h-0 flex-[3_1_0%] flex-col gap-4 overflow-hidden">
+            {isConvexConfigured ? (
+              <>
+                <div className="flex-shrink-0">
                   <AgentActivityLog threadId={threadId} isRunning={isSending} />
-                  <ListingsPanel />
-                </>
-              ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-center opacity-70">
-                  <p>
-                    Add your Convex deployment URL to enable live listing
-                    storage and activity logs.
-                  </p>
-                  <p className="text-sm">
-                    Once configured, Buscalo will surface real-time logs and
-                    listings from your agent runs.
-                  </p>
                 </div>
-              )}
-            </div>
-          </section>
+                <div className="flex min-h-0 flex-1 overflow-hidden">
+                  <ListingsPanel className="h-full min-h-0" />
+                </div>
+              </>
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-3 rounded-3xl bg-base-100 p-8 text-center text-base-content/70 shadow-sm">
+                <p>
+                  Add your Convex deployment URL to enable live listing storage
+                  and activity logs.
+                </p>
+                <p className="text-sm">
+                  Once configured, Buscalo will surface real-time logs and
+                  listings from your agent runs.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </main>

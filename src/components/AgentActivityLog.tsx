@@ -39,10 +39,10 @@ export function AgentActivityLog({
   const statusTone = isRunning ? "badge-primary" : "badge-neutral";
 
   return (
-    <section className="card bg-base-100 shadow-sm lg:rounded-3xl">
-      <div className="card-body gap-4">
+    <section className="w-full rounded-3xl bg-base-100 shadow-sm">
+      <div className="flex flex-col gap-4 p-4 lg:p-6">
         <div className="flex items-center justify-between">
-          <h2 className="card-title font-semibold text-sm uppercase tracking-wide">
+          <h2 className="font-semibold text-sm uppercase tracking-wide">
             Agent Activity
           </h2>
           <span className={`badge badge-sm ${statusTone}`}>{statusLabel}</span>
@@ -57,11 +57,13 @@ export function AgentActivityLog({
               items.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-start gap-2 rounded-lg bg-base-100/80 p-2 shadow-sm"
+                  className="flex w-full items-start gap-2 rounded-lg bg-base-100/80 p-2 shadow-sm"
                 >
                   <span className="mt-1 h-2.5 w-2.5 flex-none rounded-full bg-primary/70" />
-                  <div>
-                    <p className="leading-snug">{log.message}</p>
+                  <div className="w-full min-w-0">
+                    <p className="w-full max-w-full break-all leading-snug">
+                      {log.message}
+                    </p>
                     <p className="text-xs opacity-60">
                       {new Date(log.createdAt).toLocaleTimeString()}
                     </p>
