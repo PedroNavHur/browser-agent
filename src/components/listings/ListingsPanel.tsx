@@ -2,7 +2,7 @@
 
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { HeartPlus, Phone, Trash2 } from "lucide-react";
+import { Download, HeartPlus, Phone, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { api } from "@/lib/convexApi";
 
@@ -18,6 +18,54 @@ type LiveListing = ListingBase & { id: Id<"listings">; createdAt: number };
 type FavoriteListing = ListingBase & {
   id: Id<"favorites">;
   favoritedAt: number;
+};
+
+const downloadListingsCsv = (listings: LiveListing[]) => {
+  if (listings.length === 0) {
+    return;
+  }
+
+  const headers = [
+    "title",
+    "address",
+    "price",
+    "phone",
+    "imageUrl",
+    "createdAt",
+  ];
+  const csvEscape = (value: string | number | undefined | null) => {
+    if (value === undefined || value === null) {
+      return "";
+    }
+
+    const str = typeof value === "number" ? value.toString() : value;
+    if (str.includes(",") || str.includes("\n") || str.includes('"')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const rows = listings.map((listing) => {
+    return [
+      csvEscape(listing.title),
+      csvEscape(listing.address),
+      csvEscape(listing.price),
+      csvEscape(listing.phone),
+      csvEscape(listing.imageUrl),
+      csvEscape(new Date(listing.createdAt).toISOString()),
+    ].join(",");
+  });
+
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `buscalo_listings_${new Date().toISOString().split("T")[0]}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 type ListingsPanelProps = {
@@ -77,9 +125,22 @@ export function ListingsPanel({
             </p>
             <p className="text-sm opacity-70">Favorite the ones you like.</p>
           </div>
-          <span className="badge badge-sm badge-neutral self-start">
-            {listings.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="tooltip" data-tip="Download as CSV">
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => downloadListingsCsv(listings)}
+                disabled={listings.length === 0}
+                aria-label="Download listings as CSV"
+              >
+                <Download className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+            <span className="badge badge-sm badge-neutral">
+              {listings.length}
+            </span>
+          </div>
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-4">
