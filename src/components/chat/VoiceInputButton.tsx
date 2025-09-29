@@ -239,7 +239,7 @@ export function VoiceInputButton({
       : "Tap to speak";
 
   const statusMessage = (() => {
-    if (isProcessing) return "Transcribing…";
+    if (isProcessing) return "Processing…";
     if (error) return error;
     if (disabled) return "Agent working…";
     return "Tap once to start, tap again to send.";
