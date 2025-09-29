@@ -128,8 +128,8 @@ export function ChatWindow() {
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 px-6 pt-0 pb-14 lg:px-10">
         <ChatHeader isConvexConfigured={isConvexConfigured} />
 
-        <div className="flex flex-col gap-4 md:h-[calc(100vh-8rem)] md:min-h-0 md:flex-row md:overflow-hidden">
-          <section className="card flex h-full flex-[2_1_0%] flex-col overflow-hidden bg-base-100 shadow-sm md:h-full md:max-h-[calc(100vh-8rem)] lg:rounded-3xl">
+        <div className="flex flex-col gap-4 md:h-[calc(100vh-8rem)] md:min-h-0 md:flex-row md:overflow-visible">
+          <section className="card flex h-full flex-[2_1_0%] flex-col overflow-hidden rounded-3xl bg-base-100 shadow-sm md:h-full md:max-h-[calc(100vh-8rem)]">
             <div className="card-body flex h-full min-h-0 flex-col gap-8 overflow-hidden">
               <div className="flex-1 overflow-y-auto">
                 <ChatMessageList messages={messages} />
@@ -148,13 +148,13 @@ export function ChatWindow() {
             </div>
           </section>
 
-          <div className="flex h-full min-h-0 flex-[3_1_0%] flex-col gap-4 overflow-hidden md:h-[calc(100vh-8rem)] md:max-h-[calc(100vh-8rem)]">
+          <div className="flex h-full min-h-0 flex-[3_1_0%] flex-col gap-4 overflow-visible md:h-[calc(100vh-8rem)] md:max-h-[calc(100vh-8rem)]">
             {isConvexConfigured ? (
               <>
                 <div className="flex-shrink-0">
                   <AgentActivityLog threadId={threadId} isRunning={isSending} />
                 </div>
-                <div className="flex min-h-0 flex-1 overflow-hidden">
+                <div className="flex min-h-0 flex-1 overflow-visible">
                   <ListingsPanel className="h-full min-h-0" />
                 </div>
               </>

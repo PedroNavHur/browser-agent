@@ -9,7 +9,7 @@ type ChatMessageListProps = {
 
 export function ChatMessageList({ messages }: ChatMessageListProps) {
   return (
-    <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto rounded-box border border-base-300 bg-base-200/60 p-4">
+    <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto rounded-3xl border border-base-300 bg-base-200/60 p-4">
       {messages.map((message) => {
         const isAgent = message.role === "agent";
         return (

@@ -50,14 +50,14 @@ export function AgentActivityLog({
 
         <div
           ref={scrollContainerRef}
-          className="scrollbar-thin max-h-64 space-y-2 overflow-y-auto rounded-box border border-base-300/70 bg-base-200/60 p-3 text-sm"
+          className="scrollbar-thin max-h-64 space-y-2 overflow-y-auto rounded-3xl border border-base-300/70 bg-base-200/60 p-3 text-sm"
         >
           {threadId ? (
             items.length > 0 ? (
               items.map((log) => (
                 <div
                   key={log.id}
-                  className="flex w-full items-start gap-2 rounded-lg bg-base-100/80 p-2 shadow-sm"
+                  className="flex w-full items-start gap-2 rounded-3xl bg-base-100/80 p-2 shadow-sm"
                 >
                   <span className="mt-1 h-2.5 w-2.5 flex-none rounded-full bg-primary/70" />
                   <div className="w-full min-w-0">

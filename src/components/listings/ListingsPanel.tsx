@@ -99,16 +99,14 @@ export function ListingsPanel({
   };
 
   const panelClasses = [
+    "relative",
     "flex",
     "h-full",
     "min-h-0",
     "flex-1",
     "flex-col",
     "w-full",
-    "overflow-hidden",
-    "bg-base-100",
-    "shadow-sm",
-    "lg:rounded-3xl",
+    "overflow-visible",
     className,
   ]
     .filter(Boolean)
@@ -116,7 +114,7 @@ export function ListingsPanel({
 
   return (
     <section className={panelClasses}>
-      <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-base-100 shadow-sm">
         <header className="flex flex-shrink-0 items-start justify-between gap-3 p-6 pb-4">
           <div className="space-y-1">
             <h2 className="font-semibold text-xl">Live listings</h2>
@@ -144,9 +142,9 @@ export function ListingsPanel({
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-4">
-          <div className="scrollbar-thin max-h-[calc(100vh-18rem)] min-h-0 flex-1 space-y-4 overflow-y-auto rounded-2xl border border-base-300/70 bg-base-200/60 p-3 pr-1">
+          <div className="scrollbar-thin max-h-[calc(100vh-18rem)] min-h-0 flex-1 space-y-4 overflow-y-auto rounded-3xl border border-base-300/70 bg-base-200/60 p-3 pr-1">
             {listings.length === 0 ? (
-              <div className="rounded-box border border-base-300 border-dashed p-4 text-sm opacity-70">
+              <div className="rounded-3xl border border-base-300 border-dashed p-4 text-sm opacity-70">
                 Ask Buscalo to pull some listings and they'll appear here.
               </div>
             ) : (
@@ -181,8 +179,8 @@ type ListingCardProps = {
 
 function ListingCard({ listing, onFavorite, onRemove }: ListingCardProps) {
   return (
-    <article className="flex gap-3 rounded-box border border-base-300 bg-base-200/60 p-3">
-      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
+    <article className="flex gap-3 rounded-3xl border border-base-300 bg-base-200/60 p-3">
+      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-3xl bg-base-300">
         {listing.imageUrl ? (
           <Image
             src={listing.imageUrl}
@@ -256,9 +254,9 @@ function FavoritesList({ favorites, onRemoveFavorite }: FavoritesListProps) {
             return (
               <article
                 key={favorite.id}
-                className="flex gap-3 rounded-box border border-base-200 bg-base-200/40 p-3"
+                className="flex gap-3 rounded-3xl border border-base-200 bg-base-200/40 p-3"
               >
-                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-box bg-base-300">
+                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-3xl bg-base-300">
                   {favorite.imageUrl ? (
                     <Image
                       src={favorite.imageUrl}
