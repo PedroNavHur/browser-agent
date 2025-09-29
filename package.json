@@ -35,6 +35,7 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
+  "packageManager": "pnpm@9.6.0",
   "pnpm": {
     "patchedDependencies": {
       "playwright-core@1.55.0": "patches/playwright-core@1.55.0.patch"
